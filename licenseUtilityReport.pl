@@ -1,16 +1,6 @@
 #! /usr/bin/perl -w
 
 #################################################################################
-# No part of this program may be reproduced or transmitted in any form or by any
-# means, electronic or mechanical, including photocopying, recording, or
-# information storage and retrieval systems, for any purpose other than the
-# purchaser's personal use, without the express written permission of F5
-# Networks, Inc.
-#
-# F5 Networks and BIG-IP (c) Copyright 2008, 2012-2018. All rights reserved.
-#################################################################################
-
-#################################################################################
 # Copyright 2018 by F5 Networks, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of 
@@ -42,17 +32,16 @@ my $version = "v1.0";
 # 
 
 ## DESCRIPTION
-# written for BIG-IQ 5.2, 5.4.
+# Written for BIG-IQ 5.2 and up.
 # Utility Billing Report - Generate a usage report for your utility license(s) and provide to F5 Networks Inc. for billing purposes.
 # This script generate the utility billing report based of a list of regKey.
 #
-# Make sure you can access api.f5.com if automatic reporting is chosen (nslookup api.f5.com, ping api.f5.com)
+# Make sure you can access api.f5.com port 443 if automatic reporting is chosen (nslookup api.f5.com, ping api.f5.com, telnet api.f5.com 443)
 # 
 # The script should be installed under /shared/scripts:
 # mkdir /shared/scripts
 # chmod +x /shared/scripts/licenseUtilityReport.pl
 #
-# INTERNAL REF: https://docs.f5net.com/display/PDLICENSINGHQ/How+to+Generate+a+Utility+License+Report+using+BIG-IQ%27s+API
 # 
 my $dir = "/shared/scripts";
 
@@ -112,7 +101,7 @@ getopts('hc:q:k:r:v');
 if (defined $opt_h) {
     print "\nGeneration of Utility Billing Report using BIG-IQ's API.\n";
     print "\nThe regkey listed in the csv file or in the command line are the registration key associated with the license pool you wish to report on.";
-    print "\nReports can be automatically submited to F5 or manually created:\n";
+    print "\nReports can be automatically submitted to F5 or manually created:\n";
     print " - Automatic report submission requires BIG-IQ to access api.f5.com.\nBIG-IQ makes a REST call over SSL to api.f5.com to upload the report.\n";
     print " - Manual report submission is used in cases where BIG-IQ cannot reach api.f5.com.\nIn this workflow, the customer generates the report, extracts it, then emails it to F5 (filename F5_Billing_License_Report.<date>.txt).\n";
     print "\nThis script only applies to utility-type licenses used for F5's subscription and/or ELA programs.\n";
@@ -121,15 +110,14 @@ if (defined $opt_h) {
         print ("\t-$opt\t$usage{$opt}\n");
     }
     print "\n- Command example manual report:\n";
-    print "# ./licenseUtilityReport.pl -k K6393-26880-65706-56122-7317085,K6393-26880-65706-56122-7317086,K6393-26880-65706-56122-7317087 -r manual\n";
+    print "# ./licenseUtilityReport.pl -k DRLPZ-JISKU-VPUPT-HZMMV-LERVPYQ,GYCWI-FOUEZ-YMWPX-LYROB-PXTKMTG -r manual\n";
     print "\n- CSV file example automatic report:\n";
     print "# ./licenseUtilityReport.pl -c listregkey.csv\n";
 	print "# cat listregkey.csv\n";
-	print "  K6393-26880-65706-56122-7317085\n";
-    print "  K6393-26880-65706-56122-7317086\n";
-    print "  K6393-26880-65706-56122-7317087\n";
-	print "\nCrontable example (every 1st of the month at 10am):\n";
-	print "0 10 1 * * /usr/bin/perl /shared/scripts/licenseUtilityReport.pl -k K6393-26880-65706-56122-7317085,K6393-26880-65706-56122-7317086,K6393-26880-65706-56122-7317087 -r manual\n";
+	print "  DRLPZ-JISKU-VPUPT-HZMMV-LERVPYQ\n";
+    print "  GYCWI-FOUEZ-YMWPX-LYROB-PXTKMTG\n";
+	print "\nCron table example (every 1st of the month at 10am):\n";
+	print "0 10 1 * * /usr/bin/perl /shared/scripts/licenseUtilityReport.pl -k DRLPZ-JISKU-VPUPT-HZMMV-LERVPYQ,GYCWI-FOUEZ-YMWPX-LYROB-PXTKMTG -r manual\n";
 	print "\n0 10 1 * * /usr/bin/perl /shared/scripts/licenseUtilityReport.pl -c /shared/script/listregkey.csv\n\n";
 	print "/!\\ NOTE /!\\: if manual report is selected, do not forget to delete the old reports after sent to F5.\n\n";
     exit;
@@ -646,7 +634,7 @@ sub showTotals {
     $string = sprintf "# %-10s %-10s", $regKeyStatus{"all"}{"FINISHED"}, $regKeyStatus{"all"}{"FAILED"};
 	&printAndLog(STDOUT, 1, "$string\n");
 	&printAndLog(STDOUT, 1, "$table_head\n");
-	&printAndLog(STDOUT, 1, "# Utility License Report file: $reportfile\n\n");  
+	&printAndLog(STDOUT, 1, "# Utility License Report file: $reportfile (if Manual report chosen)\n\n");  
 	
 }
 
@@ -723,4 +711,5 @@ sub getTimeStamp2 {
     my $nice_timestamp = sprintf ( "%04d%02d%02d_%02d%02d",$year+1900,$mday,$mon+1,$hour,$min);
     return $nice_timestamp;
 }
+
 
