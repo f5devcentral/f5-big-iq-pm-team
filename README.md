@@ -6,4 +6,4 @@ This repository will contain various script using BIG-IQ's API:
 
 Script | Language | Description
 ------------ | ------------- | -------------
-licenseUtilityReport.pl | Perl | Utility Billing Report - Generate a usage report for your utility license(s) and provide to F5 Networks Inc. for billing purposes.
+licenseUtilityReport.pl | Perl | Utility Billing Report - Generate a usage report for your utility license(s) and provide to F5 Networks Inc. for billing purposes. (UNDER REVIEW)
