@@ -1,0 +1,42 @@
+---
+# Sets up prerequisite AWS network infrastructure
+- name: Deploy prerequisite infrastructure for SSG to AWS
+  hosts: localhost
+  vars_files: 
+    - ../config.yml  
+  tasks:              
+    - name: Set AWS Region
+      command: aws configure set default.region {{DEFAULT_REGION}}
+
+    - name: Retrieve available subnets
+      aws_az_facts:
+        region: "{{DEFAULT_REGION}}"
+      register: az_facts
+
+    - name: Fail if there aren't enough availability zones
+      fail: msg="Not enough availablility zones"
+      when: az_facts.availability_zones|length < 2
+
+    - name: Build VPC CloudFormation
+      cloudformation:
+        stack_name: "{{PREFIX}}-cf-stack"
+        template: ../cf/Setup-VPC.template
+        template_parameters: 
+          VPCNAME: "{{PREFIX}}-vpc"
+          VPCCIDRBLOCK: "{{VPC_CIDR_BLOCK}}"
+          REGION: "{{DEFAULT_REGION}}"
+          SN1NAME: "{{PREFIX}}-sn-1"
+          SN1AZ: "{{az_facts.availability_zones[0].zone_name}}"
+          SN1CIDRBLOCK: "{{SUBNET1_CIDR_BLOCK}}"
+          SN2NAME: "{{PREFIX}}-sn-2"
+          SN2CIDRBLOCK: "{{SUBNET2_CIDR_BLOCK}}"
+          SN2AZ: "{{az_facts.availability_zones[1].zone_name}}"
+          IGWNAME: "{{PREFIX}}-igw"
+          RT1NAME: "{{PREFIX}}-rt-1"
+          RT2NAME: "{{PREFIX}}-rt-2"
+          ELBNAME: "{{ELB_NAME}}"
+      register: cf_result
+
+    - name: Remove ELB Listener
+      command: aws elb delete-load-balancer-listeners --load-balancer-name {{ELB_NAME}} --load-balancer-ports 80
+...

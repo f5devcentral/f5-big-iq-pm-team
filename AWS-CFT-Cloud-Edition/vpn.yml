@@ -1,0 +1,47 @@
+---
+# This file establishes the necessary resources on AWS to create a VPN connection to the previously created VPC
+- name: Create VPN resources
+  hosts: localhost # Interacting with AWS we'll run this playbook locally
+  vars_files:
+    - ./config.yml
+  tasks: 
+    - name: Get VPC ID of your VPC
+      ec2_vpc_net_facts:
+        filters:
+          "tag:Name": "{{PREFIX}}-vpc"
+      register: vpc_facts
+
+    - name: There should be only one VPC matching the name lookup
+      fail: msg="More than one VPC found with name {{PREFIX}}-vpc"
+      when: vpc_facts.vpcs|length > 1
+
+    - name: Set vpc_id
+      set_fact: 
+        vpc_id: "{{vpc_facts.vpcs[0].vpc_id}}"
+
+    - name: Create Customer Gateway 
+      ec2_customer_gateway:
+        ip_address: "{{AWS_CUSTOMER_GATEWAY_IP}}"
+        name: "{{AWS_CUSTOMER_GATEWAY_NAME}}"
+        bgp_asn: 
+      register: cgw
+
+    # Need to add something to reference route tables a and b
+    - name: Create Virtual Gateway
+      ec2_vpc_vgw:
+        vpc_id: "{{vpc_id}}"
+        name: "{{PREFIX}}-vgw"
+      register: vgw
+
+    - name: Create VPN Connection
+      ec2_vpc_vpn:
+        vpn_gateway_id: vgw.id
+        customer_gateway_id: cgw.id
+      register: vpn
+
+    - name: Write VPN Configuration in # {{SPECIFIED_FORMAT}} to {{SPECIFIED_FILE}}
+      copy:
+        dest: ./aws-vpn-config
+        content: "{{vpn.customer_gateway_configuration}}"
+
+...

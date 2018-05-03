@@ -1,0 +1,22 @@
+AWS_ACCESS_KEY_ID: your aws key id
+AWS_SECRET_ACCESS_KEY: you secret access key
+
+# A unique searchable prefix to all resources which are created
+# Use a prefix w/o spaces or special characters.
+PREFIX: lastname-firstname-no-spaces
+DEFAULT_REGION: us-east-1
+AWS_SSH_KEY: name-of-your-aws-pem-file.pem
+
+# Public IP of your internal network where the on premise BIG-IQ is configured
+# This is necessary for setting up a VPN to AWS
+AWS_CUSTOMER_GATEWAY_IP: public.facing.ip.addr
+AWS_CUSTOMER_GATEWAY_NAME: "{{PREFIX}}-cgw"
+
+
+# VPC cidr block should encompass the subnets you specify
+VPC_CIDR_BLOCK: 0.0.0.0/16
+SUBNET1_CIDR_BLOCK: 0.0.1.0/24
+SUBNET2_CIDR_BLOCK: 0.0.2.0/24
+
+
+ELB_NAME: "{{PREFIX}}-elb"
