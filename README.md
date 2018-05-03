@@ -1,8 +1,6 @@
-# Welcome to the F5 BIG-IQ API Automation page
+# Welcome to the F5 BIG-IQ Automation page
 
-This GitHub Repository is managed by the F5 BIG-IQ Product Management Team (Ronnie, Kyle & Roman).
-
-This repository will contain various script using BIG-IQ's API:
+This GitHub Repository is managed by the F5 BIG-IQ Product Management Team.
 
 Script(s) | Language | Description
 ------------ | ------------- | -------------
