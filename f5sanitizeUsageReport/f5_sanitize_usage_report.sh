@@ -19,7 +19,7 @@
 # Uncomment set command below for code debugging bash
 #set -x
  
-echo -e "\nThe script replace the IP address with “x.x.x.x” and the host name with “redacted-hostname” in a JSON report."
+echo -e "\nThe script replace the IP address with “x.x.x.x”,  MAX address with “00:00:00:00:00:00” and the host name with “redacted-hostname” in a JSON report."
  
 if [[ -z $1 ]]; then
  
