@@ -19,7 +19,7 @@
 # Uncomment set command below for code debugging bash
 #set -x
  
-echo -e "\nThe script replace the IP address with “x.x.x.x”,  MAX address with “00:00:00:00:00:00” and the host name with “redacted-hostname” in a JSON report."
+echo -e "\nThe script replace the IP address with “x.x.x.x”,  MAC address with “xx:xx:xx:00:00:00” and the host name with “redacted-hostname” in a JSON report."
  
 if [[ -z $1 ]]; then
  
@@ -29,7 +29,7 @@ if [[ -z $1 ]]; then
 elif [ -f $1 ]; then
     cp -p $1 $1.orig
     sed -i -r 's#[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]#x.x.x.x#g' $1
-    sed -i -r 's#[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}#00:00:00:00:00:00#g' $1
+    sed -i -r 's#[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}:#xx:xx:xx:#g' $1
     sed -i "/'hostname.*,/c\                           \x27hostname\x27: \x27redacted-hostname\x27," $1
     sed -i "/'hostname.*'/c\                           \x27hostname\x27: \x27redacted-hostname\x27" $1
  
