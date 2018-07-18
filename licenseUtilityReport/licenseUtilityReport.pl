@@ -20,13 +20,14 @@
 my $program = $0;
 $program = `basename $program`;
 chomp $program;
-my $version = "v1.1";
+my $version = "v1.2";
 
 ## CHANGE QUEUE
-# 3/7/2018: v1.0 - r.jouhannet@f5.com - Initial version
-# 3/8/2018: v1.1 - r.jouhannet@f5.com - Add crontab help, fix Use of uninitialized value $opt_r line 347
-#										Replace Finished with Successful in Table Count, change date format in getTimeStamp2()
-#										Fix login() when password contains double !!, update the help.
+# 03/07/2018: v1.0  r.jouhannet@f5.com     Initial version
+# 03/08/2018: v1.1  r.jouhannet@f5.com     Add crontab help, fix Use of uninitialized value $opt_r line 347
+#                                           Replace Finished with Successful in Table Count, change date format in getTimeStamp2()
+#                                           Fix login() when password contains double !!, update the help.
+# 07/18/2018: v1.1  r.jouhannet@f5.com     remove authentication (script HAVE TO BE execute on the BIG-IQ locally)
 
 ## DESCRIPTION
 # Written for BIG-IQ 5.2 and up.
@@ -41,7 +42,7 @@ my $version = "v1.1";
 #
 # Make sure you test the script before setting it up in cronab. It is also recommended to test the script in crontab.
 # Configure the script in crontab and set a time in the next 3 min: e.g. if it is 8am, set it to run 8:03am
-# 3 8 * * * /usr/bin/perl /shared/scripts/licenseUtilityReport.pl -k DRLPZ-JISKU-VPUPT-HZMMV-LERVPYQ -q \'admin:password\'
+# 3 8 * * * /usr/bin/perl /shared/scripts/licenseUtilityReport.pl -k DRLPZ-JISKU-VPUPT-HZMMV-LERVPYQ
 # 
 #┌───────────── minute (0 - 59)
 #│ ┌───────────── hour (0 - 23)
@@ -70,11 +71,6 @@ my $section_head = "############################################################
 my $table_head = "#------------------------------------------------------------------------------------------";
 my $overallStartTime = gettimeofday();
 
-# some globals
-my $token = "";
-my $tokenExp = "";
-my $refreshToken = "";
-
 my $col1Fmt = "%-18s";
 my $colFmt = "%-15s";
 
@@ -101,7 +97,6 @@ my %usage = (
     "h" =>  "Help",
     "c" =>  "Path to CSV file with all regKey(s) - REQUIRED if not using -k",
     "k" =>  "regKey(s) separated by , - REQUIRED if not using -c",
-    "q" =>  "BIG-IQ admin credentials in form \'admin:password\' - REQUIRED if not using default",
     "r" =>  "Report option automatic or manual - OPTIONAL (default is automatic)",
 );
 # Use this to determine the order of the arg help output
@@ -120,16 +115,16 @@ if (defined $opt_h) {
         print ("\t-$opt\t$usage{$opt}\n");
     }
     print "\n- Command line example automatic report:\n";
-    print "# ./licenseUtilityReport.pl -k DRLPZ-JISKU-VPUPT-HZMMV-LERVPYQ,GYCWI-FOUEZ-YMWPX-LYROB-PXTKMTG -q \'admin:password\'\n";
+    print "# ./licenseUtilityReport.pl -k DRLPZ-JISKU-VPUPT-HZMMV-LERVPYQ,GYCWI-FOUEZ-YMWPX-LYROB-PXTKMTG\n";
     print "\n- CSV file example manual report:\n";
     print "# ./licenseUtilityReport.pl -c listregkey.csv -r manual\n";
 	print "# cat listregkey.csv\n";
 	print "  DRLPZ-JISKU-VPUPT-HZMMV-LERVPYQ\n";
     print "  GYCWI-FOUEZ-YMWPX-LYROB-PXTKMTG\n";
-	print "Crontab example (every 1st of the month at 10am):\n";
+	print "\nCrontab example (every 1st of the month at 10am):\n";
 	print "# crontab -e (edit: type o to add a new line, then ESC and :x to save and quit)\n";
 	print "# crontab -l (list)\n";
-	print "0 10 1 * * /usr/bin/perl /shared/scripts/licenseUtilityReport.pl -k DRLPZ-JISKU-VPUPT-HZMMV-LERVPYQ,GYCWI-FOUEZ-YMWPX-LYROB-PXTKMTG -q \'admin:password\'\n";
+	print "0 10 1 * * /usr/bin/perl /shared/scripts/licenseUtilityReport.pl -k DRLPZ-JISKU-VPUPT-HZMMV-LERVPYQ,GYCWI-FOUEZ-YMWPX-LYROB-PXTKMTG\n";
 	print "\n0 10 1 * * /usr/bin/perl /shared/scripts/licenseUtilityReport.pl -c /shared/script/listregkey.csv -r manual\n\n";
 	print "\n┌───────────── minute (0 - 59)";
 	print "\n│ ┌───────────── hour (0 - 23)";
@@ -147,10 +142,11 @@ if (defined $opt_h) {
 
 # useful stuff for JSON
 my $contType = "Content-Type: application/json";
-my $bigiqCreds = "admin:admin";
-if (defined $opt_q) {
-    $bigiqCreds = "$opt_q";
-}
+# not needed as authentication has been removed in version 1.2, script needs to be executed locally on the BIG-IQ
+#my $bigiqCreds = "admin:admin";
+#if (defined $opt_q) {
+#    $bigiqCreds = "$opt_q";
+#}
 
 # create browser for LWP requests
 my $browser = LWP::UserAgent->new;
@@ -247,17 +243,12 @@ while($perform_check4life) {
     sleep 10;
 }
 
-#======================================================
-# login to BIG-IQ.  Sets $token global used in future requests
-#======================================================
-
-login();
 
 #======================================================
 # Check the BIG-IQ version
 #======================================================
 
-my $url = 'https://localhost/mgmt/shared/resolver/device-groups/cm-shared-all-big-iqs/devices?$select=version';
+my $url = 'http://localhost:8100/shared/resolver/device-groups/cm-shared-all-big-iqs/devices?$select=version';
 my $resp = getRequest($url, "check version");
 my $bqVersion = $resp->{"items"}[0]->{"version"};
 
@@ -328,10 +319,16 @@ for $regKey (@regKeys) {
 	my %postBodyHash = ("regKey"=>$mregKey, "manuallySubmitReport"=>$manuallySubmitReport);
 	
   	my $postBody = encode_json(\%postBodyHash);
-    my $url = 'http://localhost:8100/mgmt/cm/device/licensing/utility-billing-reports';
+    my $url = 'http://localhost:8100/cm/device/licensing/utility-billing-reports';
     my $reportTask = postRequest($url, $postBody, "Generating the Report Request $mregKey");
    	my $reportStatus = $reportTask->{"status"};
     my $reportLink = $reportTask->{"selfLink"};
+    # replacing https://localhost/mgmt with http://localhost:8100 (no authentication needed)
+    my $tmp1 = "https://localhost/mgmt";
+    my $tmp2 = "http://localhost:8100";
+    $reportLink =~ s/$tmp1/$tmp2/;
+	$timestamp = getTimeStamp();
+	# &printAndLog(STDOUT, 1, "$timestamp: $reportStatus\n");
 	my $timestamp = getTimeStamp();
 	if (not defined $reportStatus) {
 		$done = 1;
@@ -349,8 +346,12 @@ for $regKey (@regKeys) {
 		my $reportTask = getRequest($url, "Get report completion details for $mregKey");
 		my $reportStatus = $reportTask->{"status"};
 		$reportLink = $reportTask->{"selfLink"};
+        # replacing https://localhost/mgmt with http://localhost:8100 (no authentication needed)
+        my $tmp1 = "https://localhost/mgmt";
+        my $tmp2 = "http://localhost:8100";
+        $reportLink =~ s/$tmp1/$tmp2/;
 		$timestamp = getTimeStamp();
-		&printAndLog(STDOUT, 1, "$timestamp: $reportStatus\n");
+		# &printAndLog(STDOUT, 1, "$timestamp: $reportStatus\n");
 
 		if ($loopWhileCount++ > 5)
         {
@@ -370,6 +371,10 @@ for $regKey (@regKeys) {
 			if ($opt_r eq "manual") {
 				my $reportUri = $reportTask->{"reportUri"};
 				#&printAndLog(STDOUT, 1, "$reportUri\n");
+                # replacing https://localhost/mgmt with http://localhost:8100 (no authentication needed)
+                my $tmp1 = "https://localhost/mgmt";
+                my $tmp2 = "http://localhost:8100";
+                $reportUri =~ s/$tmp1/$tmp2/;
 				my $reportTask = getRequest($reportUri, "Get Manual Report for $mregKey");
 				#print Dumper $reportTask;
 				open (FILE, ">>$reportfile") || die "Unable to write the report file, '$reportfile'\n";
@@ -416,116 +421,26 @@ showTotals();
 &gracefulExit(0);
 
 #======================================================
-# Login
-#======================================================
-
-sub login {
-    my ($bigIQuser, $bigIQpassword) = ("", "");
-    if ($bigiqCreds =~ /^([^:]+):(\S+)$/) {
-        ($bigIQuser, $bigIQpassword) = ($1, $2);
-    }
-
-    $timestamp = getTimeStamp();
-    &printAndLog(STDOUT, 1, "Login to BIG-IQ  $timestamp\n");
-
-    my $loginUrl = "https://localhost/mgmt/shared/authn/login";
-    my %postData = (
-        "username" => $bigIQuser,
-        "password" => "$bigIQpassword"
-    );
-    my $json = encode_json \%postData;
-
-    my $req = HTTP::Request->new('POST', $loginUrl);
-    $req->header('Content-Type' => 'application/json', 'Connection' => 'keep-alive' );
-    $req->content($json);
-
-    my $response = $browser->request($req);
-
-    if ($response->is_success && ($response->content_type eq "application/json")) {
-        rememberToken($response);
-    }
-    else
-    {
-        &printAndLog(STDERR, 1, "BIG-IQ login failed\n");
-        &printAndLog(STDERR, 1, $response->status_line . "\n");
-        &gracefulExit(1);
-    }
-}
-
-#======================================================
-# Refresh Token
-#======================================================
-
-sub refreshToken {
-    my $url = "https://localhost/mgmt/shared/authn/exchange";
-    my $jsonPostData = "{\"refreshToken\":{\"token\":\"$refreshToken\"}}";
-
-    my $req = HTTP::Request->new('POST', $url);
-    $req->header('Content-Type' => 'application/json', 'Connection' => 'keep-alive' );
-    $req->content($jsonPostData);
-
-    my $response = $browser->request($req);
-    &printAndLog(STDOUT, 1, "refresh token\n");
-
-    if ($response->is_success && ($response->content_type eq "application/json")) {
-        rememberToken($response);
-    }
-    else
-    {
-        &printAndLog(STDERR, 1, "BIG-IQ refresh token failed\n");
-        &printAndLog(STDERR, 1, $response->status_line . "\n");
-        &gracefulExit(1);
-    }
-}
-
-sub rememberToken {
-    my ($response) = @_;
-    my $jsonWorker = JSON->new->allow_nonref;
-    my $loginResp = $jsonWorker->decode($response->content);
-
-    $token = $loginResp->{"token"}->{"token"};
-    $tokenExp = $loginResp->{"token"}->{"exp"};
-    $refreshToken = $loginResp->{"refreshToken"}->{"token"};
-}
-
-#======================================================
 # getRequest - A subroutine for making GET requests
 #======================================================
 
 sub getRequest {
     my ($url, $message) = @_;
 
-    # check if our token expired
-    my $tokenTime = $tokenExp - int(gettimeofday());
-    if ($tokenTime < 0) {
-        refreshToken();         # sets global token
-        $tokenTime = $tokenExp - int(gettimeofday());
-    }
-
     # log the URL
     print LOG "GET $url\n";
 
-    # make the get request, including the auth header with the valid token
+    # make the get request, including the auth header
     my %headers = (
         'User-Agent' => 'bulkDiscovery',
         'Connection' => 'keep-alive',
-        'X-F5-Auth-Token' => $token
     );
     my $response = $browser->get($url, %headers);
 
     # log status
     print LOG $response->status_line . "\n";
 
-    # check for 401 in case token expired, and then retry
-    if ($response->code eq "401") {
-        refreshToken();
-
-        # try again with new token
-        $headers {'X-F5-Auth-Token'} = $token;
-        $response = $browser->get($url, %headers);
-        print LOG $response->status_line . "\n";
-    }
-
+   
     # if non-auth error - exit
     if ($response->is_error)
     {
@@ -577,20 +492,12 @@ sub patchRequest {
 sub postOrPatchRequest {
     my ($url, $verb, $jsonPostData, $message) = @_;
 
-    # check if our token expired
-    my $tokenTime = $tokenExp - int(gettimeofday());
-    if ($tokenTime < 0) {
-        refreshToken();         # sets global token
-        $tokenTime = $tokenExp - int(gettimeofday());
-    }
-
     #log the url & post data
     print LOG "$verb $url\n";
     print LOG maskPasswords("$jsonPostData\n");
 
     my %headers = (
         'User-Agent' => 'utilityLicenseReport',
-        'X-F5-Auth-Token' => $token,
         'Connection' => 'keep-alive'
     );
 
@@ -598,14 +505,6 @@ sub postOrPatchRequest {
     $req->header(%headers);
     $req->content($jsonPostData);
     my $response = $browser->request($req);
-
-    # check for 401 in case token expired, and then retry
-    if ($response->code eq "401") {
-        refreshToken();
-
-        $headers {'X-F5-Auth-Token'} = $token;
-        $response = $browser->post($url, $jsonPostData, %headers);
-    }
 
     # if non-auth error - exit
     if ($response->is_error)
