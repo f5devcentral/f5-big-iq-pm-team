@@ -27,7 +27,7 @@ my $version = "v1.2";
 # 03/08/2018: v1.1  r.jouhannet@f5.com     Add crontab help, fix Use of uninitialized value $opt_r line 347
 #                                           Replace Finished with Successful in Table Count, change date format in getTimeStamp2()
 #                                           Fix login() when password contains double !!, update the help.
-# 07/18/2018: v1.1  r.jouhannet@f5.com     remove authentication (script HAVE TO BE execute on the BIG-IQ locally)
+# 07/18/2018: v1.2  r.jouhannet@f5.com     remove authentication (script HAVE TO BE execute on the BIG-IQ locally)
 
 ## DESCRIPTION
 # Written for BIG-IQ 5.2 and up.
