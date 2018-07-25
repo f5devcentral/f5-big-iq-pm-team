@@ -15,7 +15,10 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 #################################################################################
- 
+
+# 07/18/2018: v1.0  r.jouhannet@f5.com     Initial version
+# 07/25/2018: v1.1  r.jouhannet@f5.com     Add <full path> in the Usage. also correct redacted-hostname.
+
 # Uncomment set command below for code debugging bash
 #set -x
  
@@ -23,7 +26,7 @@ echo -e "\nThe script replaces the IP address with “x.x.x.x”,  MAC address w
  
 if [[ -z $1 ]]; then
  
-    echo -e "\n-> No JSON report specified.\n\nUsage: ./f5_sanitize_usage_report.sh report.json\n"
+    echo -e "\n-> No JSON report specified.\n\nUsage: ./f5_sanitize_usage_report.sh <full path>/report.json\n"
     exit 1;
  
 elif [ -f $1 ]; then
@@ -47,9 +50,12 @@ elif [ -f $1 ]; then
         fi
     done < $1.orig
 
-    # Replace hostname with redacted-hostnam
-    sed -i "/'hostname.*,/c\                           \x27hostname\x27: \x27redacted-hostname\x27," $1
-    sed -i "/'hostname.*'/c\                           \x27hostname\x27: \x27redacted-hostname\x27" $1
+    # Replace hostname with redacted-hostname x22=" x27='
+    sed -i "s#.*\x22hostname.*,#      \x22hostname\x22: \x22redacted-hostname\x22,#" $1
+    sed -i "s#.*\x22hostname.*\x22#      \x22hostname\x22: \x22redacted-hostname\x22#" $1
+
+    sed -i "s#.*\x27hostname.*,#      \x27hostname\x27: \x27redacted-hostname\x27,#" $1
+    sed -i "s#.*\x27hostname.*\x27#      \x27hostname\x27: \x27redacted-hostname\x27#" $1
  
     echo -e "\n-> Backup prior modification: $1.orig"
     echo -e "-> $1 was updated masking IP addresses, MAC addresses and hostnames.\n"
