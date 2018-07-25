@@ -20,7 +20,7 @@
 my $program = $0;
 $program = `basename $program`;
 chomp $program;
-my $version = "v1.3";
+my $version = "v1.4";
 
 ## CHANGE QUEUE
 # 03/07/2018: v1.0  r.jouhannet@f5.com     Initial version
@@ -29,6 +29,7 @@ my $version = "v1.3";
 #                                           Fix login() when password contains double !!, update the help.
 # 07/18/2018: v1.2  r.jouhannet@f5.com     Remove authentication (script HAVE TO BE execute on the BIG-IQ locally)
 # 07/24/2018: v1.3  r.jouhannet@f5.com     Fixed manual option where the report was not in correct order
+# 07/25/2018: v1.4  r.jouhannet@f5.com     Increased the loop max retry var from 5 to 50. Changed from 1sec to 2sec wait in the loop. Replace report extention with .json
 
 ## DESCRIPTION
 # Written for BIG-IQ 5.2 and up.
@@ -85,7 +86,7 @@ open (LOG, ">$log") || die "Unable to write the log file, '$log'\n";
 
 # report file (for manual option)
 my $timestamp2 = getTimeStamp2();
-$reportfile = "F5_Billing_License_Report.$timestamp2.txt";
+$reportfile = "F5_Billing_License_Report.$timestamp2.json";
 if (-e "tmp.csv"){
 	# remove report if it exists (in case the user ran the script 2 times in the same min.
 	unlink glob $reportfile;
@@ -101,7 +102,7 @@ my %usage = (
     "r" =>  "Report option automatic or manual - OPTIONAL (default is automatic)",
 );
 # Use this to determine the order of the arg help output
-my @usage = ("h","c","k","r","q");
+my @usage = ("h","c","k","r");
 our($opt_h,$opt_c,$opt_k,$opt_r,$opt_q);
 getopts('hc:q:k:r:v');
 if (defined $opt_h) {
@@ -109,7 +110,7 @@ if (defined $opt_h) {
     print "\nThe regkey listed in the csv file or in the command line are the registration key associated with the license pool you wish to report on.";
     print "\nReports can be automatically submitted to F5 or manually created:\n";
     print " - Automatic report submission requires BIG-IQ to access api.f5.com.\nBIG-IQ makes a REST call over SSL to api.f5.com to upload the report.\n";
-    print " - Manual report submission is used in cases where BIG-IQ cannot reach api.f5.com.\nIn this workflow, the customer generates the report, extracts it, then emails it to F5 (filename F5_Billing_License_Report.<date>.txt).\n";
+    print " - Manual report submission is used in cases where BIG-IQ cannot reach api.f5.com.\nIn this workflow, the customer generates the report, extracts it, then emails it to F5 (filename F5_Billing_License_Report.<date>.json).\n";
     print "\nThis script only applies to utility-type licenses used for F5's subscription and/or ELA programs.\n";
     print "\nAllowed command line options:\n";
     foreach my $opt (@usage) {
@@ -340,7 +341,7 @@ for $regKey (@regKeys) {
 	}
 	
 	my $regKeyStart = gettimeofday();
-	# Step 2: Polling for report completion 9 in a loop, max try 5 times, wait 1sec between each pooling
+	# Step 2: Polling for report completion in a loop, max try 20 times, wait 2sec between each pooling
     while (not $done)
     {
 		my $url = $reportLink;
@@ -352,9 +353,9 @@ for $regKey (@regKeys) {
         my $tmp2 = "http://localhost:8100";
         $reportLink =~ s/$tmp1/$tmp2/;
 		$timestamp = getTimeStamp();
-		# &printAndLog(STDOUT, 1, "$timestamp: $reportStatus\n");
+		&printAndLog(STDOUT, 1, "$timestamp: $reportStatus\n");
 
-		if ($loopWhileCount++ > 5)
+		if ($loopWhileCount++ > 50)
         {
             &printAndLog(STDOUT, 1, "Exiting with max tries\n");
             last;
@@ -371,7 +372,7 @@ for $regKey (@regKeys) {
         {
 			if ($opt_r eq "manual") {
 				my $reportUri = $reportTask->{"reportUri"};
-				#&printAndLog(STDOUT, 1, "$reportUri\n");
+				&printAndLog(STDOUT, 1, "$reportUri\n");
                 # replacing https://localhost/mgmt with http://localhost:8100 (no authentication needed)
                 my $tmp1 = "https://localhost/mgmt";
                 my $tmp2 = "http://localhost:8100";
@@ -389,7 +390,7 @@ for $regKey (@regKeys) {
             $done = 1;
         }
 
-		sleep 1;
+		sleep 2;
     }  #end while task
 	
 	$loopForCount++;	
