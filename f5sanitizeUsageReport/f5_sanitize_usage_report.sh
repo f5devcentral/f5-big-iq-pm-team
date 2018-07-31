@@ -19,6 +19,7 @@
 # 07/18/2018: v1.0  r.jouhannet@f5.com     Initial version
 # 07/25/2018: v1.1  r.jouhannet@f5.com     Add <full path> in the Usage. also correct redacted-hostname.
 # 07/27/2018: v1.2  r.jouhannet@f5.com     Hash IP address and hostname
+# 07/31/2018: v1.3  r.jouhannet@f5.com     Fix issue with } at the end of the json file.
 
 # Uncomment set command below for code debugging bash
 #set -x
@@ -56,6 +57,9 @@ elif [ -f $1 ]; then
             echo $line >> $1
         fi
     done < $1.orig
+
+    # Fix missing } at the end
+    echo -e "}" >> $1
 
     echo -e "\n-> Backup prior modification: $1.orig"
     echo -e "-> $1 was updated masking IP addresses, MAC addresses and hostnames.\n"
