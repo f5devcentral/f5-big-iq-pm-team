@@ -6,3 +6,4 @@ Script(s) | Language | Description
 ------------ | ------------- | -------------
 licenseUtilityReport | Perl | Utility Billing Report - Generate a usage report for your utility license(s) and provide to F5 Networks Inc. for billing purposes. https://devcentral.f5.com/articles/generation-of-utility-billing-report-using-big-iqs-api-30193
 f5sanitizeUsageReport | Bash | Script to mask IP/MAC addresses and Hostnames from a BIG-IQ JSON report. Usage: ./f5_sanitize_usage_report.sh report.json
+SSLcertKeyCRLimportTool | Python | Automate import of SSL Cert, Key & CRL from BIG-IP to BIG-IQ. Usage: ./import-bigip-cert-key-crl.py <bigip>
