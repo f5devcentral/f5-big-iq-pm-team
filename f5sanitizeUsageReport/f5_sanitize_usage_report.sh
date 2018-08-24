@@ -20,17 +20,20 @@
 # 07/25/2018: v1.1  r.jouhannet@f5.com     Add <full path> in the Usage. also correct redacted-hostname.
 # 07/27/2018: v1.2  r.jouhannet@f5.com     Hash IP address and hostname
 # 07/31/2018: v1.3  r.jouhannet@f5.com     Fix issue with } at the end of the json file.
+# 08/24/2018: v1.4  r.jouhannet@f5.com     Add encryption to the obfuscated hashed variables (mac, IP and hostname)
+
+### Secret password to encrupt the md5 hash
+secret_password="changme"
 
 # Uncomment set command below for code debugging bash
 #set -x
- 
-echo -e "\nThe script replaces the IP address, MAC address and the host name with with hash value (md5) in a JSON report."
- 
+
+echo -e "\nThe script replaces the IP address, MAC address and the host name with with encrypted hash value (md5) in a JSON report."
 if [[ -z $1 ]]; then
- 
+
     echo -e "\n-> No JSON report specified.\n\nUsage: ./f5_sanitize_usage_report.sh <full path>/report.json\n"
     exit 1;
- 
+
 elif [ -f $1 ]; then
     # Backup original report
     mv $1 $1.orig
@@ -41,16 +44,19 @@ elif [ -f $1 ]; then
     do 
         if [[ $line = *"macAddress"* ]]; then
             # if macAddress, hash it and replace it with the hash
-            macAddressMD5=$(echo $line | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | md5sum | cut -f1 -d' ')
+            macAddressMD5=$(echo $line | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | md5sum | cut -f1 -d' ' | openssl base64 -a -salt -k $secret_password)
+            #echo "DEBUG $macAddressMD5"
             echo $line | sed -r "s#[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}:[a-zA-Z0-9]{2}#$macAddressMD5#g" >> $1
         elif [[ $line = *"address"* ]]; then
             # if address (IP), hash it and replace it with the hash
-            ipAddressMD5=$(echo $line | grep -o -E '[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]' | md5sum | cut -f1 -d' ')
+            ipAddressMD5=$(echo $line | grep -o -E '[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]' | md5sum | cut -f1 -d' ' | openssl base64 -a -salt -k $secret_password)
+            #echo "DEBUG $ipAddressMD5"
             echo $line | sed -r "s#[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]#$ipAddressMD5#g" >> $1
         elif [[ $line = *"hostname"* ]]; then
-             # hostname, hash it and replace it with the hashx22=" x27='
+            # hostname, hash it and replace it with the hashx22=" x27='
             hostname=$(echo $line | awk -F'"' '$2=="hostname"{print $4}')
-            hostnameMD5=$(echo $line | awk -F'"' '$2=="hostname"{print $4}' | md5sum | cut -f1 -d' ')
+            hostnameMD5=$(echo $line | awk -F'"' '$2=="hostname"{print $4}' | md5sum | cut -f1 -d' ' | openssl base64 -a -salt -k $secret_password)
+            #echo "DEBUG $hostnameMD5"
             echo $line | sed -r "s#$hostname#$hostnameMD5#g" >> $1
         else
             # if no macAddress or address (IP), do nothing
@@ -62,7 +68,7 @@ elif [ -f $1 ]; then
     echo -e "}" >> $1
 
     echo -e "\n-> Backup prior modification: $1.orig"
-    echo -e "-> $1 was updated masking IP addresses, MAC addresses and hostnames.\n"
+    echo -e "-> $1 was updated obfuscating with encryption IP addresses, MAC addresses and hostnames.\n"
     exit 0;
 else
     
