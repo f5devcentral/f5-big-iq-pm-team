@@ -17,7 +17,7 @@
 #################################################################################
 
 # 09/13/2018: v1.0  r.jouhannet@f5.com     Initial version
-
+# 09/17/2018: v1.1  r.jouhannet@f5.com     Fix replace section (e.g. empty)
 
 ### Secret password to encrupt the md5 hash
 secret_password="changme"
