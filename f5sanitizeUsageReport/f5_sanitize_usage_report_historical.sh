@@ -51,26 +51,41 @@ elif [ -f $1 ]; then
             # 12 = MAC address
 
             ipAddress=$(echo $line | cut -d ',' -f9)
-            ipAddressMD5=$(echo "$ipAddress"  | grep -o -E '[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]' | md5sum | cut -f1 -d' ' | openssl base64 -a -salt -k $secret_password)
+            if [ ! -z "$ipAddress" ]; then
+                ipAddressMD5=$(echo "$ipAddress"  | grep -o -E '[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]' | md5sum | cut -f1 -d' ' | openssl base64 -a -salt -k $secret_password)
+            else
+                ipAddress="empty"
+                ipAddressMD5="empty"
+            fi
+
             hostname=$(echo $line | cut -d ',' -f10)
-            hostnameMD5=$(echo "$hostname"  | awk -F'"' '$2=="hostname"{print $4}' | md5sum | cut -f1 -d' ' | openssl base64 -a -salt -k $secret_password)
+            if [ ! -z "$hostname" ]; then
+                hostnameMD5=$(echo "$hostname"  | awk -F'"' '$2=="hostname"{print $4}' | md5sum | cut -f1 -d' ' | openssl base64 -a -salt -k $secret_password)
+            else
+                hostname="empty"
+                hostnameMD5="empty"
+            fi
+
             macAddress=$(echo $line | cut -d ',' -f12)
-            macAddressMD5=$(echo "$macAddress" | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | md5sum | cut -f1 -d' ' | openssl base64 -a -salt -k $secret_password)
-        
+            if [ ! -z "$macAddress" ]; then
+                macAddressMD5=$(echo "$macAddress" | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | md5sum | cut -f1 -d' ' | openssl base64 -a -salt -k $secret_password)
+            else
+                macAddress="empty"
+                macAddressMD5="empty"
+            fi
+
             #echo -e "\nDEBUG1 before $ipAddress after $ipAddressMD5"
             #echo -e "DEBUG2 before $hostname after $hostnameMD5"
             #echo -e "DEBUG3 before $macAddress after $macAddressMD5"
 
-            if [ -z "$macAddress" ]; then
-                echo $line | sed -r "s#$ipAddress#$ipAddressMD5#g" | sed -r "s#$hostname#$hostnameMD5#g" >> $1
-            else
-                echo $line | sed -r "s#$ipAddress#$ipAddressMD5#g" | sed -r "s#$hostname#$hostnameMD5#g" | sed -r "s#$macAddress#$macAddressMD5#g" >> $1
-            fi
-
+            echo $line | sed -r "s#$ipAddress#$ipAddressMD5#g" | sed -r "s#$hostname#$hostnameMD5#g" | sed -r "s#$macAddress#$macAddressMD5#g" >> $1
         fi
     done < $1.orig
 
-      echo -e "\n-> Backup prior modification: $1.orig"
+    # remove empty world with nothing
+    sed -i 's/\<empty\>//g' $1
+
+    echo -e "\n-> Backup prior modification: $1.orig"
     echo -e "-> $1 was updated obfuscating with encryption IP addresses, MAC addresses and hostnames.\n"
     exit 0;
 else
