@@ -123,8 +123,7 @@ else
         plink=$(echo $plink | sed 's#https://localhost/mgmt#http://localhost:8100#g')
         policyRules=$(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era)
         echo $policyRules | jq .
-        send_to_bigiq_target $plink $policyRules PUT
-
+        
         # Export port list destination
         portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].destination.portListReferences[].link") )
         for link in "${portListlink[@]}"
@@ -181,7 +180,6 @@ else
             fi
         done
 
-        
         ruleListslink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].ruleListReference.link") )
         for link in "${ruleListslink[@]}"
         do
@@ -207,6 +205,8 @@ else
                 fi
             done 
         done
+
+        send_to_bigiq_target $plink $policyRules PUT
     done
 
     # Delete the snapshot
