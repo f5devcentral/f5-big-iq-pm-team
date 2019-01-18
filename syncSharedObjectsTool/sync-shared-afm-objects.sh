@@ -18,10 +18,41 @@
 #limitations under the License.
 #################################################################################
 
-# 01/17/2019: v1.0  r.jouhannet@f5.com     Initial version
+## CHANGE QUEUE
+# 01/18/2019: v1.0  r.jouhannet@f5.com     Initial version
 
-# Install the script under /shared/scripts in BIG-IQ 1.
-# The script will be running on BIG-IQ 1 where the export is done.
+## DESCRIPTION
+# Written for BIG-IQ 5.4 and up.
+# Script to export shared AFM objects from 1 BIG-IQ to another.
+
+# The script will:
+#   1. Create a AFM snapshot on BIG-IQ source
+#   2. Export from the snapshot port lists, address lists, rule lists, policies and policy rules
+#   3. Import in BIG-IQ target objects exported previously
+
+# The Target BIG-IQ, login and password need to be specified in the parameters of the script.
+# Basic Authentication needs to be turned on on the target BIG-IQ (set-basic-auth on)
+
+# Usage: ./sync-shared-afm-objects.sh 10.1.1.6 admin password
+
+# The script should be installed under /shared/scripts on the BIG-IQ where you want to export the objects.
+# mkdir /shared/scripts
+# chmod +x /shared/scripts/sync-shared-afm-objects.sh 
+#
+# Make sure you test the script before setting it up in cronab. It is also recommended to test the script in crontab.
+# Configure the script in crontab, example every 30min.
+# 0,30 * * * * /shared/scripts/sync-shared-afm-objects.sh 10.1.1.6 admin password > /shared/scripts/sync-shared-afm-objects.log
+# 
+#┌───────────── minute (0 - 59)
+#│ ┌───────────── hour (0 - 23)
+#│ │ ┌───────────── day of month (1 - 31)
+#│ │ │ ┌───────────── month (1 - 12)
+#│ │ │ │ ┌───────────── day of week (0 - 6) (Sunday to Saturday;
+#│ │ │ │ │                                       7 is also Sunday on some systems)
+#│ │ │ │ │";
+#│ │ │ │ │";
+#* * * * *
+#
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
