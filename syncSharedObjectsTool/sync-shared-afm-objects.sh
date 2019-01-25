@@ -78,7 +78,7 @@ if [[ -z $1 || -z $2 || -z $3 ]]; then
 
     echo -e "\nThe script will:\n\t1. Create a AFM snapshot on BIG-IQ source\n \t2. Export from the snapshot port lists, address lists, rule lists, policies and policy rules\n \t3. Import in BIG-IQ target objects exported previously"
     echo -e "\n${RED}=> No Target BIG-IQ, login and password specified ('set-basic-auth on' on target BIG-IQ)${NC}\n\n"
-    echo -e "Usage: ${BLUE}./sync-shared-afm-objects.sh 10.1.1.6 admin password${NC}\n"
+    echo -e "Usage: ${BLUE}./sync-shared-afm-objects.sh 10.1.1.6 admin password [debug]${NC}\n"
     exit 1;
 
 else
@@ -93,8 +93,8 @@ else
         # parameter 1 is the URL, parameter 2 is the JSON payload, parameter 3 is the method (PUT or POST)
         json="$2"
         method="$3"
-        [[ $debug == "debug" ]] && echo "DEBUG1 $method"
-        [[ $debug == "debug" ]] && echo "DEBUG2 $json"
+        [[ $debug == "debug" ]] && echo "DEBUG Method: $method"
+        [[ $debug == "debug" ]] && echo "DEBUG JSON: $json"
         if [[ $method == "PUT" ]]; then
             # PUT
             url=$(echo $1 | sed "s#http://localhost:8100#https://$bigiqIpTarget/mgmt#g")
@@ -107,19 +107,18 @@ else
                 url="https://$bigiqIpTarget/mgmt/cm/adc-core/working-config/net/ip-address-lists"
             fi
         fi
-        echo -e "===>>${RED} $method ${NC}in${GREEN} $url ${NC}"
+        [[ $debug == "debug" ]] && echo -e "${RED}$method ${NC}in${GREEN} $url ${NC}"
         if [[ $debug == "debug" ]]; then
             curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url &
         else
             curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url > /dev/null &
         fi
-        echo
     }
 
     snapshotName="snapshot-firewall-$(date +'%Y%d%m-%H%M')"
     
     # Create the snapshot
-    echo -e "\n- Create snapshot${RED} $snapshotName ${NC} - $(date +'%Y-%d-%m %H:%M')"
+    echo -e "\n$(date +'%Y-%d-%m %H:%M'): create snapshot${RED} $snapshotName ${NC}"
     snapSelfLink=$(curl -s -H "Content-Type: application/json" -X POST -d "{'name':'$snapshotName'}" http://localhost:8100/cm/firewall/tasks/snapshot-config | jq '.selfLink')
 
     # Check Snapshot "currentStep": "DONE"
@@ -134,9 +133,10 @@ else
     done
 
     era=$(curl -s -H "Content-Type: application/json" -X GET $snapSelfLink | jq '.era')
-    echo -e "\n- Snapshot${RED} $snapshotName ${NC}creation completed: era = ${RED} $era ${NC}"
+    echo -e "$(date +'%Y-%d-%m %H:%M'): snapshot${RED} $snapshotName ${NC}creation completed: era =${RED} $era ${NC}"
 
     # Export policy
+    echo -e "$(date +'%Y-%d-%m %H:%M'): policies"
     policy=$(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/policies?era=$era)
     [[ $debug == "debug" ]] && echo $policy | jq .
     send_to_bigiq_target http://localhost:8100/cm/firewall/working-config/policies "$policy" PUT
@@ -144,7 +144,7 @@ else
     policyRuleslink=( $(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/policies?era=$era | jq -r ".items[].rulesCollectionReference.link") )
     for plink in "${policyRuleslink[@]}"
     do
-        echo -e "- policyRuleslink:${GREEN} $plink ${NC} - $(date +'%Y-%d-%m %H:%M')"
+        echo -e "$(date +'%Y-%d-%m %H:%M'): policyRuleslink:${GREEN} $plink ${NC}"
         # Export policy rule
         plink=$(echo $plink | sed 's#https://localhost/mgmt#http://localhost:8100#g')
         policyRules=$(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era)
@@ -154,7 +154,7 @@ else
         for link in "${ruleListslink[@]}"
         do
             # Export rule list
-            echo -e "\t- ruleListslink:${GREEN} $link ${NC} - $(date +'%Y-%d-%m %H:%M')"
+            echo -e "$(date +'%Y-%d-%m %H:%M'): ruleListslink:${GREEN} $link ${NC}"
             link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
             if [[ "$link" != "null" ]]; then
                 ruleLists=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
@@ -166,13 +166,13 @@ else
             ruleslink=( $(curl -s -H "Content-Type: application/json" -X GET $link?era=$era | jq -r ".rulesCollectionReference.link") )
             for link2 in "${ruleslink[@]}"
             do
-                echo -e "\t\t- ruleslink:${GREEN} $link2 ${NC}"
+                echo -e "$(date +'%Y-%d-%m %H:%M'):  ruleslink:${GREEN} $link2 ${NC}"
                 link2=$(echo $link2 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                 # Export port list destination
-                portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].destination.portListReferences[].link") )
+                portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].destination.portListReferences[].link" 2> /dev/null) )
                 for link3 in "${portListlink[@]}"
                 do
-                    echo -e "\t\t\t- portListlink dest:${GREEN} $link3 ${NC}"
+                    echo -e "$(date +'%Y-%d-%m %H:%M'):   portListlink dest:${GREEN} $link3 ${NC}"
                     # Export port list
                     link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                     if [[ "$link3" != "null" ]]; then
@@ -183,10 +183,10 @@ else
                 done
 
                 # Export port list source
-                portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].source.portListReferences[].link") )
+                portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].source.portListReferences[].link" 2> /dev/null) )
                 for link3 in "${portListlink[@]}"
                 do
-                    echo -e "\t\t\t- portListlink src:${GREEN} $link3 ${NC}"
+                    echo -e "$(date +'%Y-%d-%m %H:%M'):   portListlink src:${GREEN} $link3 ${NC}"
                     # Export port list
                     link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                     if [[ "$link3" != "null" ]]; then
@@ -197,10 +197,10 @@ else
                 done
 
                 # Export address list destination
-                addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].destination.addressListReferences[].link") )
+                addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].destination.addressListReferences[].link" 2> /dev/null) )
                 for link3 in "${addressListlink[@]}"
                 do
-                    echo -e "\t\t\t- addressListlink dest:${GREEN} $link3 ${NC}"
+                    echo -e "$(date +'%Y-%d-%m %H:%M'):   addressListlink dest:${GREEN} $link3 ${NC}"
                     # Export address list
                     link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                     if [[ "$link3" != "null" ]]; then
@@ -211,10 +211,10 @@ else
                 done
 
                 # Export address list source
-                addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].source.addressListReferences[].link") )
+                addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].source.addressListReferences[].link" 2> /dev/null) )
                 for link3 in "${addressListlink[@]}"
                 do
-                    echo -e "\t\t\t- addressListlink src:${GREEN} $link3 ${NC}"
+                    echo -e "$(date +'%Y-%d-%m %H:%M'):   addressListlink src:${GREEN} $link3 ${NC}"
                     # Export address list
                     link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                     if [[ "$link3" != "null" ]]; then
@@ -236,10 +236,10 @@ else
     done
 
     wait
-    echo "all processes complete".
+    echo -e "All processes complete"
 
     # Delete the snapshot
-    echo -e "\n- Delete snapshot${RED} $snapshotName ${NC} - $(date +'%Y-%d-%m %H:%M')"
+    echo -e "$(date +'%Y-%d-%m %H:%M'): delete snapshot${RED} $snapshotName ${NC}"
     curl -s -H "Content-Type: application/json" -X DELETE $snapSelfLink
 
     echo "Elapsed: $(($SECONDS / 3600))hrs $((($SECONDS / 60) % 60))min $(($SECONDS % 60))sec"
