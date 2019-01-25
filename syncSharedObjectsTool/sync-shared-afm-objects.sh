@@ -126,7 +126,7 @@ else
     snapCurrentStep=$(curl -s -H "Content-Type: application/json" -X GET $snapSelfLink | jq '.currentStep')
     while [ "$snapCurrentStep" != "DONE" ]
     do
-        [[ $debug == "debug" ]] && "$(date +'%Y-%d-%m %H:%M'): $snapCurrentStep"
+        [[ $debug == "debug" ]] && echo -e "$(date +'%Y-%d-%m %H:%M'): $snapCurrentStep"
         snapCurrentStep=$(curl -s -H "Content-Type: application/json" -X GET $snapSelfLink | jq '.currentStep')
         snapCurrentStep=${snapCurrentStep:1:${#snapCurrentStep}-2}
     done
@@ -143,70 +143,12 @@ else
     policyRuleslink=( $(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/policies?era=$era | jq -r ".items[].rulesCollectionReference.link") )
     for plink in "${policyRuleslink[@]}"
     do
-        echo -e "$(date +'%Y-%d-%m %H:%M'): policyRuleslink:${GREEN} $plink ${NC}"
+        echo -e "\n$(date +'%Y-%d-%m %H:%M'): policyRuleslink:${GREEN} $plink ${NC}"
         # Export policy rule
         plink=$(echo $plink | sed 's#https://localhost/mgmt#http://localhost:8100#g')
         policyRules=$(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era)
         [[ $debug == "debug" ]] && echo $policyRules | jq .
 
-        ####################################################
-        # Export port list destination
-        portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].destination.portListReferences[].link") )
-        for link in "${portListlink[@]}"
-        do
-            echo -e "$(date +'%Y-%d-%m %H:%M'):   portListlink dest:${GREEN} $link ${NC}"
-            # Export port list
-            link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
-            if [[ "$link" != "null" ]]; then
-                portLists_d=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
-                [[ $debug == "debug" ]] && echo $portLists_d | jq .
-                send_to_bigiq_target $link "$portLists_d" POST
-            fi
-        done
-
-        # Export port list source
-        portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].source.portListReferences[].link") )
-        for link in "${portListlink[@]}"
-        do
-            echo -e "$(date +'%Y-%d-%m %H:%M'):   portListlink src:${GREEN} $link ${NC}"
-            # Export port list
-            link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
-            if [[ "$link" != "null" ]]; then
-                portLists_s=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
-                [[ $debug == "debug" ]] && echo $portLists_s | jq .
-                send_to_bigiq_target $link "$portLists_s" POST
-            fi
-        done
-
-        # Export address list destination
-        addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].destination.addressListReferences[].link") )
-        for link in "${addressListlink[@]}"
-        do
-            echo -e "$(date +'%Y-%d-%m %H:%M'):   addressListlink dest:${GREEN} $link ${NC}"
-            # Export address list
-            link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
-            if [[ "$link" != "null" ]]; then
-                addressLists_d=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
-                [[ $debug == "debug" ]] && echo $addressLists_d | jq .
-                send_to_bigiq_target $link "$addressLists_d" POST
-            fi
-        done
-
-        # Export address list source
-        addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].source.addressListReferences[].link") )
-        for link in "${addressListlink[@]}"
-        do
-            echo -e "$(date +'%Y-%d-%m %H:%M'):   addressListlink src:${GREEN} $link ${NC}"
-            # Export address list
-            link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
-            if [[ "$link" != "null" ]]; then
-                addressLists_s=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
-                [[ $debug == "debug" ]] && echo $addressLists_s | jq .
-                send_to_bigiq_target $link "$addressLists_s" POST
-            fi
-        done
-        ####################################################
-        
         ruleListslink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].ruleListReference.link") )
         for link in "${ruleListslink[@]}"
         do
@@ -298,7 +240,7 @@ else
     echo -e "$(date +'%Y-%d-%m %H:%M'): delete snapshot${RED} $snapshotName ${NC}"
     curl -s -H "Content-Type: application/json" -X DELETE $snapSelfLink > /dev/null
 
-    echo "\n\nElapsed: $(($SECONDS / 3600))hrs $((($SECONDS / 60) % 60))min $(($SECONDS % 60))sec"
+    echo -e "\n\nElapsed:${RED} $(($SECONDS / 3600))hrs $((($SECONDS / 60) % 60))min $(($SECONDS % 60))sec${NC}"
     echo
 
     exit 0;
