@@ -27,7 +27,7 @@
 # Written for BIG-IQ 5.4 and up.
 # Script to export shared AFM objects from 1 BIG-IQ to another.
 # The script execution time will depend on the number of objects so if you schedule it in crontab, make sure you take in account the running time for your config.
-# e.g. 17k objects takes approx 3 hours
+# e.g. 17k objects takes approx ~9 hours
 
 # The script will:
 #   1. Create a AFM snapshot on BIG-IQ source
@@ -150,7 +150,7 @@ else
         policyRules=$(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era)
         [[ $debug == "debug" ]] && echo $policyRules | jq .
         
-        ruleListslink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].ruleListReference.link") )
+        ruleListslink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].ruleListReference.link 2> /dev/null") )
         for link in "${ruleListslink[@]}"
         do
             # Export rule list
