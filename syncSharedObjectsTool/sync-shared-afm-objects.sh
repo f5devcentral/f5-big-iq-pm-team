@@ -148,6 +148,64 @@ else
         plink=$(echo $plink | sed 's#https://localhost/mgmt#http://localhost:8100#g')
         policyRules=$(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era)
         [[ $debug == "debug" ]] && echo $policyRules | jq .
+
+        ####################################################
+        # Export port list destination
+        portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].destination.portListReferences[].link") )
+        for link in "${portListlink[@]}"
+        do
+            echo -e "$(date +'%Y-%d-%m %H:%M'):   portListlink dest:${GREEN} $link ${NC}"
+            # Export port list
+            link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+            if [[ "$link" != "null" ]]; then
+                portLists_d=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
+                [[ $debug == "debug" ]] && echo $portLists_d | jq .
+                send_to_bigiq_target $link "$portLists_d" POST
+            fi
+        done
+
+        # Export port list source
+        portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].source.portListReferences[].link") )
+        for link in "${portListlink[@]}"
+        do
+            echo -e "$(date +'%Y-%d-%m %H:%M'):   portListlink src:${GREEN} $link ${NC}"
+            # Export port list
+            link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+            if [[ "$link" != "null" ]]; then
+                portLists_s=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
+                [[ $debug == "debug" ]] && echo $portLists_s | jq .
+                send_to_bigiq_target $link "$portLists_s" POST
+            fi
+        done
+
+        # Export address list destination
+        addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].destination.addressListReferences[].link") )
+        for link in "${addressListlink[@]}"
+        do
+            echo -e "$(date +'%Y-%d-%m %H:%M'):   addressListlink dest:${GREEN} $link ${NC}"
+            # Export address list
+            link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+            if [[ "$link" != "null" ]]; then
+                addressLists_d=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
+                [[ $debug == "debug" ]] && echo $addressLists_d | jq .
+                send_to_bigiq_target $link "$addressLists_d" POST
+            fi
+        done
+
+        # Export address list source
+        addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].source.addressListReferences[].link") )
+        for link in "${addressListlink[@]}"
+        do
+            echo -e "$(date +'%Y-%d-%m %H:%M'):   addressListlink src:${GREEN} $link ${NC}"
+            # Export address list
+            link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+            if [[ "$link" != "null" ]]; then
+                addressLists_s=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
+                [[ $debug == "debug" ]] && echo $addressLists_s | jq .
+                send_to_bigiq_target $link "$addressLists_s" POST
+            fi
+        done
+        ####################################################
         
         ruleListslink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].ruleListReference.link") )
         for link in "${ruleListslink[@]}"
@@ -167,6 +225,8 @@ else
             do
                 echo -e "$(date +'%Y-%d-%m %H:%M'):  ruleslink:${GREEN} $link2 ${NC}"
                 link2=$(echo $link2 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+
+                ####################################################
                 # Export port list destination
                 portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].destination.portListReferences[].link") )
                 for link3 in "${portListlink[@]}"
@@ -222,6 +282,7 @@ else
                         send_to_bigiq_target $link3 "$addressLists_s" POST
                     fi
                 done
+                ####################################################
 
                 if [[ "$link2" != "null" ]]; then
                     rules=$(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era)
