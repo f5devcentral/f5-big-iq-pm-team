@@ -109,9 +109,9 @@ else
         fi
         [[ $debug == "debug" ]] && echo -e "${RED}$method ${NC}in${GREEN} $url ${NC}"
         if [[ $debug == "debug" ]]; then
-            curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url &
+            curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url
         else
-            curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url > /dev/null &
+            curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url > /dev/null
         fi
     }
 
@@ -234,9 +234,6 @@ else
 
         send_to_bigiq_target $plink "$policyRules" PUT
     done
-
-    wait
-    echo -e "All processes complete"
 
     # Delete the snapshot
     echo -e "$(date +'%Y-%d-%m %H:%M'): delete snapshot${RED} $snapshotName ${NC}"
