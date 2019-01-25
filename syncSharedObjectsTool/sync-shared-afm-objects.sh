@@ -83,6 +83,7 @@ if [[ -z $1 || -z $2 || -z $3 ]]; then
 
 else
 
+    SECONDS=0
     bigiqIpTarget=$1
     bigiqAdminTarget=$2
     bigiqPasswordTarget=$3
@@ -106,7 +107,7 @@ else
                 url="https://$bigiqIpTarget/mgmt/cm/adc-core/working-config/net/ip-address-lists"
             fi
         fi
-        echo -e "\n====>>>${RED} $method ${NC}in${GREEN} $url ${NC}"
+        echo -e "\n===>>${RED} $method ${NC}in${GREEN} $url ${NC}"
         if [[ $debug == "debug" ]]; then
             curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url
         else
@@ -116,7 +117,7 @@ else
     }
 
     snapshotName="snapshot-firewall-$(date +'%Y%H%M')"
-    SECONDS=0
+    
     # Create the snapshot
     echo -e "\n- Create snapshot${RED} $snapshotName ${NC} - $(date +'%Y%H%M')"
     snapSelfLink=$(curl -s -H "Content-Type: application/json" -X POST -d "{'name':'$snapshotName'}" http://localhost:8100/cm/firewall/tasks/snapshot-config | jq '.selfLink')
@@ -153,7 +154,7 @@ else
         for link in "${ruleListslink[@]}"
         do
             # Export rule list
-            echo -e "\n\n\t- ruleListslink:${GREEN} $link ${NC} - $(date +'%Y%H%M')"
+            echo -e "\n\t- ruleListslink:${GREEN} $link ${NC} - $(date +'%Y%H%M')"
             link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
             if [[ "$link" != "null" ]]; then
                 ruleLists=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
@@ -165,13 +166,13 @@ else
             ruleslink=( $(curl -s -H "Content-Type: application/json" -X GET $link?era=$era | jq -r ".rulesCollectionReference.link") )
             for link2 in "${ruleslink[@]}"
             do
-                echo -e "\n\n\t\t- ruleslink:${GREEN} $link2 ${NC}"
+                echo -e "\n\t\t- ruleslink:${GREEN} $link2 ${NC}"
                 link2=$(echo $link2 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                 # Export port list destination
                 portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].destination.portListReferences[].link") )
                 for link3 in "${portListlink[@]}"
                 do
-                    echo -e "\n\n\t- portListlink dest:${GREEN} $link3 ${NC}"
+                    echo -e "\n\t- portListlink dest:${GREEN} $link3 ${NC}"
                     # Export port list
                     link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                     if [[ "$link3" != "null" ]]; then
@@ -185,7 +186,7 @@ else
                 portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].source.portListReferences[].link") )
                 for link3 in "${portListlink[@]}"
                 do
-                    echo -e "\n\n\t- portListlink src:${GREEN} $link3 ${NC}"
+                    echo -e "\n\t- portListlink src:${GREEN} $link3 ${NC}"
                     # Export port list
                     link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                     if [[ "$link3" != "null" ]]; then
@@ -199,7 +200,7 @@ else
                 addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].destination.addressListReferences[].link") )
                 for link3 in "${addressListlink[@]}"
                 do
-                    echo -e "\n\n\t- addressListlink dest:${GREEN} $link3 ${NC}"
+                    echo -e "\n\t- addressListlink dest:${GREEN} $link3 ${NC}"
                     # Export address list
                     link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                     if [[ "$link3" != "null" ]]; then
@@ -213,7 +214,7 @@ else
                 addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].source.addressListReferences[].link") )
                 for link3 in "${addressListlink[@]}"
                 do
-                    echo -e "\n\n\t- addressListlink src:${GREEN} $link3 ${NC}"
+                    echo -e "\n\t- addressListlink src:${GREEN} $link3 ${NC}"
                     # Export address list
                     link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                     if [[ "$link3" != "null" ]]; then
