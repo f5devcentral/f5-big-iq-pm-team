@@ -116,10 +116,10 @@ else
         echo
     }
 
-    snapshotName="snapshot-firewall-$(date +'%Y%H%M')"
+    snapshotName="snapshot-firewall-$(date +'%Y%d%m-%H%M')"
     
     # Create the snapshot
-    echo -e "\n- Create snapshot${RED} $snapshotName ${NC} - $(date +'%Y%H%M')"
+    echo -e "\n- Create snapshot${RED} $snapshotName ${NC} - $(date +'%Y-%d-%m %H:%M')"
     snapSelfLink=$(curl -s -H "Content-Type: application/json" -X POST -d "{'name':'$snapshotName'}" http://localhost:8100/cm/firewall/tasks/snapshot-config | jq '.selfLink')
 
     # Check Snapshot "currentStep": "DONE"
@@ -144,7 +144,7 @@ else
     policyRuleslink=( $(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/policies?era=$era | jq -r ".items[].rulesCollectionReference.link") )
     for plink in "${policyRuleslink[@]}"
     do
-        echo -e "- policyRuleslink:${GREEN} $plink ${NC} - $(date +'%Y%H%M')"
+        echo -e "- policyRuleslink:${GREEN} $plink ${NC} - $(date +'%Y-%d-%m %H:%M')"
         # Export policy rule
         plink=$(echo $plink | sed 's#https://localhost/mgmt#http://localhost:8100#g')
         policyRules=$(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era)
@@ -154,7 +154,7 @@ else
         for link in "${ruleListslink[@]}"
         do
             # Export rule list
-            echo -e "\t- ruleListslink:${GREEN} $link ${NC} - $(date +'%Y%H%M')"
+            echo -e "\t- ruleListslink:${GREEN} $link ${NC} - $(date +'%Y-%d-%m %H:%M')"
             link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
             if [[ "$link" != "null" ]]; then
                 ruleLists=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
@@ -236,7 +236,7 @@ else
     done
 
     # Delete the snapshot
-    echo -e "\n- Delete snapshot${RED} $snapshotName ${NC} - $(date +'%Y%H%M')"
+    echo -e "\n- Delete snapshot${RED} $snapshotName ${NC} - $(date +'%Y-%d-%m %H:%M')"
     curl -s -H "Content-Type: application/json" -X DELETE $snapSelfLink
 
     echo "Elapsed: $(($SECONDS / 3600))hrs $((($SECONDS / 60) % 60))min $(($SECONDS % 60))sec"
