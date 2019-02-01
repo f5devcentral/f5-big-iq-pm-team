@@ -106,6 +106,7 @@ debug=$4
 send_to_bigiq_target () {
     # parameter 1 is the URL, parameter 2 is the JSON payload, parameter 3 is the method (PUT or POST)
     json="$2"
+    [[ $debug == "debug" ]] && echo $json | jq .
     method="$3"
     if [[ $method == "PUT" ]]; then
         # PUT
@@ -153,14 +154,17 @@ else
     [[ $debug == "debug" ]] && echo $snapSelfLink
 
     era=$(curl -s -H "Content-Type: application/json" -X GET $snapSelfLink | jq '.era')
-    snapshotReference=$(curl -s -H "Content-Type: application/json" -X GET $snapSelfLink | jq '.snapshotReference.link')
+    snapshotReferenceLink=$(curl -s -H "Content-Type: application/json" -X GET $snapSelfLink | jq '.snapshotReference.link')
+    snapshotReferenceLink=${snapshotReferenceLink:1:${#snapshotReferenceLink}-2}
     echo -e "$(date +'%Y-%d-%m %H:%M'): snapshot${RED} $snapshotName ${NC}creation completed: era =${RED} $era ${NC}"
 
     # If previousSnapshotName does not exist, do the initial export/import of the AFM objects (this can take a while)
     if [ ! -f ./previousSnapshotName ]; then
+        echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} INITIAL EXPORT/IMPORT${NC}"
         # save snapshot name and link ref
         echo $snapshotName > previousSnapshotName
-        echo $snapshotReference > previousSnapshotReference
+        echo $snapSelfLink > previousSnapSelfLink
+        echo $snapshotReferenceLink > previousSnapshotReferenceLink
 
         # Export policy
         echo -e "$(date +'%Y-%d-%m %H:%M'): policies"
@@ -325,22 +329,25 @@ else
             send_to_bigiq_target $plink "$policyRules" PUT
         done
     else
+        echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} FOLLOWING EXPORT/IMPORT ALREADY${NC}"
         # If previousSnapshot file exist, we are going to do a diff between this snapshot and the one new one created at the begining of the script
         # so we don't re-import all the AFM objects but only the diff 
         #
         # Retreive previous snapshot name
         previousSnapshotName=$(cat ./previousSnapshotName)
-        previousSnapshotReference=$(cat ./previousSnapshotReference)
+        previousSnapSelfLink=$(cat ./previousSnapSelfLink)
+        previousSnapshotReferenceLink=$(cat ./previousSnapshotReferenceLink)
         # Save current snapshot name and link ref
         echo $snapshotName > previousSnapshotName
-        echo $snapshotReference > previousSnapshotReference
+        echo $snapSelfLink > previousSnapSelfLink
+        echo $snapshotReferenceLink > previousSnapshotReferenceLink
 
         echo -e "$(date +'%Y-%d-%m %H:%M'): previous snapshot${RED} $previousSnapshotName ${NC}"
 
-        from_snapshot_link=${previousSnapshotReference:1:${#previousSnapshotReference}-2}
-        to_snapshot_link=${snapshotReference:1:${#snapshotReference}-2}
-        [[ $debug == "debug" ]] && echo $previousSnapshotReference
-        [[ $debug == "debug" ]] && echo $snapshotReference
+        from_snapshot_link=$previousSnapshotReferenceLink
+        to_snapshot_link=$snapshotReferenceLink
+        [[ $debug == "debug" ]] && echo $previousSnapshotReferenceLink
+        [[ $debug == "debug" ]] && echo $snapshotReferenceLink
 
         diffSelfLink=$(curl -s -H "Content-Type: application/json" -X POST -d '{"description":"Diff pre-deploy-golden and post-deploy-end-corrupt","deviceOrientedDiff":false,"fromStateReference":{"link":"'"$from_snapshot_link"'"},"toStateReference":{"link":"'"$to_snapshot_link"'"},"deviceGroupFilterReferences":null}' http://localhost:8100/cm/firewall/tasks/difference-config | jq '.selfLink')
 
@@ -368,22 +375,18 @@ else
         objectsLinks=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | sort -u ) )
         for link in "${objectsLinks[@]}"
         do
+            [[ $debug == "debug" ]] && echo
             echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} $link ${NC}"
             link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
             if [[ "$link" != "null" ]]; then
                 object=$(curl -s -H "Content-Type: application/json" -X GET $link&era=$era)
-                [[ $debug == "debug" ]] && echo $objects
-                # If policy PUT, otherwise POST
-                if [[ $link == *"address-lists"* || $link == *"rule-lists"* || $link == *"port-lists"* ]]; then
-                    send_to_bigiq_target $link "$object" POST
-                else
-                    send_to_bigiq_target $link "$object" PUT
-                fi
+                [[ $debug == "debug" ]] && echo $object
+                send_to_bigiq_target $link "$object" POST
             fi
         done
 
-        # Delete the old snapshot (we are keeping only Snapshot - 1)
-        echo -e "\n$(date +'%Y-%d-%m %H:%M'): delete snapshot${RED} $previousSnapshotName ${NC}"
+        # Delete the old snapshot (we are keeping only lates Snapshot)
+        echo -e "$(date +'%Y-%d-%m %H:%M'): delete snapshot${RED} $previousSnapshotName ${NC}"
         curl -s -H "Content-Type: application/json" -X DELETE $previousSnapSelfLink > /dev/null  
     fi
 
