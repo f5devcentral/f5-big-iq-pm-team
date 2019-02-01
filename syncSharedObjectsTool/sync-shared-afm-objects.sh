@@ -385,9 +385,14 @@ else
         differenceReferenceLink=${differenceReferenceLink:1:${#differenceReferenceLink}-2}
         differenceReferenceLink="$differenceReferenceLink/parts/10000000-0000-0000-0000-000000000000"
 
-        objectsLinks=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | sort -u ) )
-        if [ -z "${objectsLinks[@]}" ]; then
-            echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} No objects${NC}"
+        # policies and rules (sort inverted)
+        objectsLinks1=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep policies | sort -ur ) )
+        # port-lists, address-lists, rule-lists
+        objectsLinks2=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep -v policies | sort -u ) )
+        # merge both arrays
+        objectsLinks=("${objectsLinks1[@]}" "${objectsLinks2[@]}")
+        if [ -z "$objectsLinks" ]; then
+            echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} no objects${NC}"
         else
             for link in "${objectsLinks[@]}"
             do
