@@ -31,14 +31,14 @@
 #
 # The script will:
 #   - Create a AFM snapshot on BIG-IQ source
-#   - 1st time the script is executed:
+#   - INITIAL EXPORT/IMPORT
 #      1. Export from the snapshot port lists, address lists, rule lists, policies and policy rules
 #         Notes:
 #           - the script only syncs objects that are in use in the policy
 #           - the script will not import ports/addresses which contains reference to other ports/addresses lists (e.g. ort list nested into a port list)
 #           - The script execution time will depend on the number of objects (e.g. 17.6k objects takes approx ~13 hours)
 #      2. Import in BIG-IQ target objects exported previously
-#   - other time the script is executed:
+#   - FOLLOWING EXPORT/IMPORT
 #      1. Make a diff between previous snapshot and current
 #      2. xport from the diff new port lists, address lists, rule lists, policies and policy rules
 #      3. Import in BIG-IQ target objects exported previously
@@ -55,13 +55,16 @@
 # set-basic-auth on
 #
 # Execute the script for the 1st time manually and make sure the result is correct comparing source and target BIG-IQ.
-# Usage: ./sync-shared-afm-objects.sh 10.1.1.6 admin password
+# Usage: ./sync-shared-afm-objects.sh 10.1.1.4 admin password
+#
+# Reset the script to initial export/import
+# Usage: ./sync-shared-afm-objects.sh reset
 # 
 # Then, schedule the script into the crontab to run every 30min
 #
 # Make sure you test the script before setting it up in cronab. It is also recommended to test the script in crontab.
 # Configure the script in crontab, example every 30min:
-# 0,30 * * * * /shared/scripts/sync-shared-afm-objects.sh 10.1.1.6 admin password > /shared/scripts/sync-shared-afm-objects.log
+# 0,30 * * * * /shared/scripts/sync-shared-afm-objects.sh 10.1.1.4 admin password > /shared/scripts/sync-shared-afm-objects.log
 # 
 #┌───────────── minute (0 - 59)
 #│ ┌───────────── hour (0 - 23)
@@ -77,7 +80,7 @@
 #
 ## TROUBLESHOOTING
 # To run in debug mode, add debug at the end of the command:
-# e.g.: ./sync-shared-afm-objects.sh 10.1.1.6 admin password debug
+# e.g.: ./sync-shared-afm-objects.sh 10.1.1.4 admin password debug
 #
 #########################################################################
 
@@ -124,14 +127,24 @@ send_to_bigiq_target () {
     if [[ $debug == "debug" ]]; then
         curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url
     else
-        curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url > /dev/null
+        curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url | grep '"code":'
     fi
 }
 
-if [[ -z $1 || -z $2 || -z $3 ]]; then
-    echo -e "\nThe script will:\n\t1. Create a AFM snapshot on BIG-IQ source\n \t2. Export from the snapshot port lists, address lists, rule lists, policies and policy rules\n \t3. Import in BIG-IQ target objects exported previously"
-    echo -e "\n${RED}=> No Target BIG-IQ, login and password specified ('set-basic-auth on' on target BIG-IQ)${NC}\n\n"
-    echo -e "Usage: ${BLUE}./sync-shared-afm-objects.sh 10.1.1.6 admin password [debug]${NC}\n"
+if [[  $1 == "reset" ]]; then
+    rm previousSnapshot* 2> /dev/null
+    echo -e "\nInitial export/import will occure next time the script is launched.\n\n${RED}Please re-launch the script.${NC}\n"
+    echo -e "Usage: ${BLUE}./sync-shared-afm-objects.sh 10.1.1.4 admin password [debug]${NC}\n"
+    exit 1;
+elif  [[ -z $1 || -z $2 || -z $3 ]]; then
+    echo -e "\nThe script will:\n\t1. Create a AFM snapshot on BIG-IQ source"
+    echo -e "\t2. Export from the snapshot port lists, address lists, rule lists, policies and policy rules"
+    echo -e "\t3. Import in BIG-IQ target objects exported previously\n"
+    echo -e "Note: The first time the script is executed, it does a FULL export/import."
+    echo -e "      The following times, the script will do a diff between snapshot and extract the new objects."
+    echo -e "      If you need to do again the initial sync, run ./sync-shared-afm-objects.sh reset"
+    echo -e "\n${RED}=> No Target BIG-IQ, login and password specified ('set-basic-auth on' on target BIG-IQ)${NC}\n"
+    echo -e "Usage: ${BLUE}./sync-shared-afm-objects.sh 10.1.1.4 admin password [debug]${NC}\n"
     exit 1;
 else
     snapshotName="snapshot-firewall-$(date +'%Y%d%m-%H%M')"
@@ -329,7 +342,7 @@ else
             send_to_bigiq_target $plink "$policyRules" PUT
         done
     else
-        echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} FOLLOWING EXPORT/IMPORT ALREADY${NC}"
+        echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} FOLLOWING EXPORT/IMPORT${NC}"
         # If previousSnapshot file exist, we are going to do a diff between this snapshot and the one new one created at the begining of the script
         # so we don't re-import all the AFM objects but only the diff 
         #
@@ -373,17 +386,21 @@ else
         differenceReferenceLink="$differenceReferenceLink/parts/10000000-0000-0000-0000-000000000000"
 
         objectsLinks=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | sort -u ) )
-        for link in "${objectsLinks[@]}"
-        do
-            [[ $debug == "debug" ]] && echo
-            echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} $link ${NC}"
-            link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
-            if [[ "$link" != "null" ]]; then
-                object=$(curl -s -H "Content-Type: application/json" -X GET $link&era=$era)
-                [[ $debug == "debug" ]] && echo $object
-                send_to_bigiq_target $link "$object" POST
-            fi
-        done
+        if [ -z "${objectsLinks[@]}" ]; then
+            echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} No objects${NC}"
+        else
+            for link in "${objectsLinks[@]}"
+            do
+                [[ $debug == "debug" ]] && echo
+                echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} $link ${NC}"
+                link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+                if [[ "$link" != "null" ]]; then
+                    object=$(curl -s -H "Content-Type: application/json" -X GET $link&era=$era)
+                    [[ $debug == "debug" ]] && echo $object
+                    send_to_bigiq_target $link "$object" POST
+                fi
+            done
+        fi
 
         # Delete the old snapshot (we are keeping only lates Snapshot)
         echo -e "$(date +'%Y-%d-%m %H:%M'): delete snapshot${RED} $previousSnapshotName ${NC}"
