@@ -35,6 +35,7 @@
 #      1. Export from the snapshot port lists, address lists, rule lists, policies and policy rules
 #         Notes:
 #           - the script only syncs objects that are in use in the policy
+#           - the scri[t wont delete objects on target BIG-IQ if object is deleted on source BIG-IQ
 #           - the script will not import ports/addresses which contains reference to other ports/addresses lists (e.g. ort list nested into a port list)
 #           - The script execution time will depend on the number of objects (e.g. 17.6k objects takes approx ~13 hours)
 #      2. Import in BIG-IQ target objects exported previously
@@ -385,12 +386,24 @@ else
         differenceReferenceLink=${differenceReferenceLink:1:${#differenceReferenceLink}-2}
         differenceReferenceLink="$differenceReferenceLink/parts/10000000-0000-0000-0000-000000000000"
 
-        # policies and rules (sort inverted)
-        objectsLinks1=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep policies | sort -ur ) )
-        # port-lists, address-lists, rule-lists
-        objectsLinks2=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep -v policies | sort -u ) )
-        # merge both arrays
-        objectsLinks=("${objectsLinks1[@]}" "${objectsLinks2[@]}")
+        # policies
+        objectsLinks1=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep policies | grep -v rules | sort -u ) )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks1:"; echo ${objectsLinks1[@]} | tr " " "\n"
+        # rules
+        objectsLinks2=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep policies | grep rules | sort -u ) )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks2:"; echo ${objectsLinks2[@]} | tr " " "\n"
+        # rule-lists
+        objectsLinks3=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep rule-lists | sort -u ) )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks3:"; echo ${objectsLinks3[@]} | tr " " "\n"
+        # port-lists
+        objectsLinks4=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep port-lists| sort -u ) )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks4:"; echo ${objectsLinks4[@]} | tr " " "\n"
+        # address-lists
+        objectsLinks5=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep address-lists | sort -u ) )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks5:"; echo ${objectsLinks5[@]} | tr " " "\n"
+            # merge arrays
+        objectsLinks=("${objectsLinks4[@]}" "${objectsLinks5[@]}" "${objectsLinks3[@]}" "${objectsLinks1[@]}" "${objectsLinks2[@]}" )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks:"; echo ${objectsLinks[@]} | tr " " "\n"
         if [ -z "$objectsLinks" ]; then
             echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} no objects${NC}"
         else
