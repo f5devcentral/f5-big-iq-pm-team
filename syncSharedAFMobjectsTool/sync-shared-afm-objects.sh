@@ -58,7 +58,7 @@
 # set-basic-auth on
 #
 # Execute the script for the 1st time manually and make sure the result is correct comparing source and target BIG-IQ.
-# Usage: ./sync-shared-afm-objects.sh 10.1.1.4 admin password
+# Usage: nohup ./sync-shared-afm-objects.sh 10.1.1.4 admin password &
 #
 # Reset the script to initial export/import
 # Usage: ./sync-shared-afm-objects.sh reset
