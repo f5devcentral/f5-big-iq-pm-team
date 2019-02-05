@@ -22,8 +22,9 @@
 # 01/18/2019: v1.0  r.jouhannet@f5.com     Initial version
 # 01/24/2019: v1.1  r.jouhannet@f5.com     Fix spaces causing issue in JSON objects, move the loop on port/addresses objects under rule-lists
 #                                          Add debug option, add check if the script is already running, add overall runtime.
-# 02/01/2019: v1.2  r.jouhannet@f5.com     Fix port/address nested into rules in policies (not rules lists)
-#                                          Implement Diff between 2 snapshots to find new AFM object and sync to target BIG-IQ    
+# 02/04/2019: v1.2  r.jouhannet@f5.com     Fix port/address nested into rules in policies (not rules lists)
+#                                          Implement Diff between 2 snapshots to find new AFM object and sync to target BIG-IQ
+#                                          Handle DELETE objects
 
 ## DESCRIPTION
 # Written for BIG-IQ 5.4 and up.
@@ -33,15 +34,16 @@
 #   - Create a AFM snapshot on BIG-IQ source
 #   - INITIAL EXPORT/IMPORT
 #      1. Export from the snapshot port lists, address lists, rule lists, policies and policy rules
-#         Notes:
+#         Limiations:
 #           - the script only syncs objects that are in use in the policy
-#           - the scri[t wont delete objects on target BIG-IQ if object is deleted on source BIG-IQ
+#           - the script is not syncing the iRules, so those will need to be sync manually if any used in the rules.
+#           - the script wont delete objects on target BIG-IQ if object is deleted on source BIG-IQ
 #           - the script will not import ports/addresses which contains reference to other ports/addresses lists (e.g. ort list nested into a port list)
-#           - The script execution time will depend on the number of objects (e.g. 17.6k objects takes approx ~13 hours)
+#           - the script execution time will depend on the number of objects (e.g. 17.6k objects takes approx ~13 hours)
 #      2. Import in BIG-IQ target objects exported previously
 #   - FOLLOWING EXPORT/IMPORT
 #      1. Make a diff between previous snapshot and current
-#      2. xport from the diff new port lists, address lists, rule lists, policies and policy rules
+#      2. Export from the diff new port lists, address lists, rule lists, policies and policy rules
 #      3. Import in BIG-IQ target objects exported previously
 
 
@@ -111,10 +113,17 @@ send_to_bigiq_target () {
     # parameter 1 is the URL, parameter 2 is the JSON payload, parameter 3 is the method (PUT or POST)
     json="$2"
     [[ $debug == "debug" ]] && echo $json | jq .
+    # removing "generation": 2, as this is not needed and causing error in the sync
+    json=$(echo $json | jq 'del(.generation)')
+    [[ $debug == "debug" ]] && echo $json | jq .
     method="$3"
-    if [[ $method == "PUT" ]]; then
+    if [[ $method == "PUT" || $method == "DELETE" ]]; then
         # PUT
         url=$(echo $1 | sed "s#http://localhost:8100#https://$bigiqIpTarget/mgmt#g")
+        if [[ $url == *"address-lists"* ]]; then
+            # The Address-List must be configured via /mgmt/cm/adc-core/working-config/net/ip-address-lists
+            url=$(echo $url | sed "s#cm/firewall/working-config/address-lists#cm/adc-core/working-config/net/ip-address-lists#g")
+        fi
     else
         # POST
         # we remove the id at the end for the POST
@@ -126,14 +135,20 @@ send_to_bigiq_target () {
     fi
     [[ $debug == "debug" ]] && echo -e "${RED}$method ${NC}in${GREEN} $url ${NC}"
     if [[ $debug == "debug" ]]; then
-        curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url
+        output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url)
     else
-        curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url | grep '"code":'
+        output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url | grep '"code":')
+    fi
+    # If error, return 1
+    if [[ $output == *'"code":'* ]]; then
+        return 1
+    else
+        return 0
     fi
 }
 
 if [[  $1 == "reset" ]]; then
-    rm previousSnapshot* 2> /dev/null
+    rm previous* 2> /dev/null
     echo -e "\nInitial export/import will occure next time the script is launched.\n\n${RED}Please re-launch the script.${NC}\n"
     echo -e "Usage: ${BLUE}./sync-shared-afm-objects.sh 10.1.1.4 admin password [debug]${NC}\n"
     exit 1;
@@ -255,90 +270,99 @@ else
             ####################################################
 
             ruleListslink=( $(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era | jq -r ".items[].ruleListReference.link" 2> /dev/null) )
-            for link in "${ruleListslink[@]}"
-            do
-                # Export rule list
-                echo -e "$(date +'%Y-%d-%m %H:%M'): ruleListslink:${GREEN} $link ${NC}"
-                link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
-                if [[ "$link" != "null" ]]; then
-                    ruleLists=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
-                    [[ $debug == "debug" ]] && echo $ruleLists | jq .
-                    send_to_bigiq_target $link "$ruleLists" POST
-                fi
-
-                # Export rules
-                ruleslink=( $(curl -s -H "Content-Type: application/json" -X GET $link?era=$era | jq -r ".rulesCollectionReference.link" 2> /dev/null) )
-                for link2 in "${ruleslink[@]}"
+            ruleListslink=( "${ruleListslink[@]/'null'}" )
+            [[ $debug == "debug" ]] && echo "${ruleListslink[@]}" | tr " " "\n"
+            if [ -z "$ruleListslink" ]; then
+                echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} no objects (ruleListslink)${NC}"
+            else
+                for link in "${ruleListslink[@]}"
                 do
-                    echo -e "$(date +'%Y-%d-%m %H:%M'):  ruleslink:${GREEN} $link2 ${NC}"
-                    link2=$(echo $link2 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
-
-                    ####################################################
-                    # THOSE ARE NESTED WITHIN THE A RULE PRESENT IN THE RULE LISTS
-                    # Export port list destination
-                    portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].destination.portListReferences[].link" 2> /dev/null) )
-                    for link3 in "${portListlink[@]}"
-                    do
-                        echo -e "$(date +'%Y-%d-%m %H:%M'):   portListlink dest:${GREEN} $link3 ${NC}"
-                        # Export port list
-                        link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
-                        if [[ "$link3" != "null" ]]; then
-                            portLists_d=$(curl -s -H "Content-Type: application/json" -X GET $link3?era=$era)
-                            [[ $debug == "debug" ]] && echo $portLists_d | jq .
-                            send_to_bigiq_target $link3 "$portLists_d" POST
+                    ## Work around after removing the null in the array, it lefts some extra space iterating on the loop
+                    if [[ $link == *"http"* ]]; then
+                        # Export rule list
+                        echo -e "$(date +'%Y-%d-%m %H:%M'): ruleListslink:${GREEN} $link ${NC}"
+                        link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+                        if [[ "$link" != "null" ]]; then
+                            ruleLists=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
+                            [[ $debug == "debug" ]] && echo $ruleLists | jq .
+                            send_to_bigiq_target $link "$ruleLists" POST
                         fi
-                    done
-
-                    # Export port list source
-                    portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].source.portListReferences[].link" 2> /dev/null) )
-                    for link3 in "${portListlink[@]}"
-                    do
-                        echo -e "$(date +'%Y-%d-%m %H:%M'):   portListlink src:${GREEN} $link3 ${NC}"
-                        # Export port list
-                        link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
-                        if [[ "$link3" != "null" ]]; then
-                            portLists_s=$(curl -s -H "Content-Type: application/json" -X GET $link3?era=$era)
-                            [[ $debug == "debug" ]] && echo $portLists_s | jq .
-                            send_to_bigiq_target $link3 "$portLists_s" POST
-                        fi
-                    done
-
-                    # Export address list destination
-                    addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].destination.addressListReferences[].link" 2> /dev/null) )
-                    for link3 in "${addressListlink[@]}"
-                    do
-                        echo -e "$(date +'%Y-%d-%m %H:%M'):   addressListlink dest:${GREEN} $link3 ${NC}"
-                        # Export address list
-                        link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
-                        if [[ "$link3" != "null" ]]; then
-                            addressLists_d=$(curl -s -H "Content-Type: application/json" -X GET $link3?era=$era)
-                            [[ $debug == "debug" ]] && echo $addressLists_d | jq .
-                            send_to_bigiq_target $link3 "$addressLists_d" POST
-                        fi
-                    done
-
-                    # Export address list source
-                    addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].source.addressListReferences[].link" 2> /dev/null) )
-                    for link3 in "${addressListlink[@]}"
-                    do
-                        echo -e "$(date +'%Y-%d-%m %H:%M'):   addressListlink src:${GREEN} $link3 ${NC}"
-                        # Export address list
-                        link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
-                        if [[ "$link3" != "null" ]]; then
-                            addressLists_s=$(curl -s -H "Content-Type: application/json" -X GET $link3?era=$era)
-                            [[ $debug == "debug" ]] && echo $addressLists_s | jq .
-                            send_to_bigiq_target $link3 "$addressLists_s" POST
-                        fi
-                    done
-                    ####################################################
-
-                    if [[ "$link2" != "null" ]]; then
-                        rules=$(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era)
-                        [[ $debug == "debug" ]] && echo $rules | jq .
-                        send_to_bigiq_target $link2 "$rules" PUT
                     fi
-                done 
-            done
+
+                    # Export rules
+                    ruleslink=( $(curl -s -H "Content-Type: application/json" -X GET $link?era=$era | jq -r ".rulesCollectionReference.link" 2> /dev/null) )
+                    for link2 in "${ruleslink[@]}"
+                    do
+                        echo -e "$(date +'%Y-%d-%m %H:%M'):  ruleslink:${GREEN} $link2 ${NC}"
+                        link2=$(echo $link2 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+
+                        ####################################################
+                        # THOSE ARE NESTED WITHIN THE A RULE PRESENT IN THE RULE LISTS
+                        # Export port list destination
+                        portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].destination.portListReferences[].link" 2> /dev/null) )
+                        for link3 in "${portListlink[@]}"
+                        do
+                            echo -e "$(date +'%Y-%d-%m %H:%M'):   portListlink dest:${GREEN} $link3 ${NC}"
+                            # Export port list
+                            link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+                            if [[ "$link3" != "null" ]]; then
+                                portLists_d=$(curl -s -H "Content-Type: application/json" -X GET $link3?era=$era)
+                                [[ $debug == "debug" ]] && echo $portLists_d | jq .
+                                send_to_bigiq_target $link3 "$portLists_d" POST
+                            fi
+                        done
+
+                        # Export port list source
+                        portListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].source.portListReferences[].link" 2> /dev/null) )
+                        for link3 in "${portListlink[@]}"
+                        do
+                            echo -e "$(date +'%Y-%d-%m %H:%M'):   portListlink src:${GREEN} $link3 ${NC}"
+                            # Export port list
+                            link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+                            if [[ "$link3" != "null" ]]; then
+                                portLists_s=$(curl -s -H "Content-Type: application/json" -X GET $link3?era=$era)
+                                [[ $debug == "debug" ]] && echo $portLists_s | jq .
+                                send_to_bigiq_target $link3 "$portLists_s" POST
+                            fi
+                        done
+
+                        # Export address list destination
+                        addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].destination.addressListReferences[].link" 2> /dev/null) )
+                        for link3 in "${addressListlink[@]}"
+                        do
+                            echo -e "$(date +'%Y-%d-%m %H:%M'):   addressListlink dest:${GREEN} $link3 ${NC}"
+                            # Export address list
+                            link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+                            if [[ "$link3" != "null" ]]; then
+                                addressLists_d=$(curl -s -H "Content-Type: application/json" -X GET $link3?era=$era)
+                                [[ $debug == "debug" ]] && echo $addressLists_d | jq .
+                                send_to_bigiq_target $link3 "$addressLists_d" POST
+                            fi
+                        done
+
+                        # Export address list source
+                        addressListlink=( $(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era | jq -r ".items[].source.addressListReferences[].link" 2> /dev/null) )
+                        for link3 in "${addressListlink[@]}"
+                        do
+                            echo -e "$(date +'%Y-%d-%m %H:%M'):   addressListlink src:${GREEN} $link3 ${NC}"
+                            # Export address list
+                            link3=$(echo $link3 | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+                            if [[ "$link3" != "null" ]]; then
+                                addressLists_s=$(curl -s -H "Content-Type: application/json" -X GET $link3?era=$era)
+                                [[ $debug == "debug" ]] && echo $addressLists_s | jq .
+                                send_to_bigiq_target $link3 "$addressLists_s" POST
+                            fi
+                        done
+                        ####################################################
+
+                        if [[ "$link2" != "null" ]]; then
+                            rules=$(curl -s -H "Content-Type: application/json" -X GET $link2?era=$era)
+                            [[ $debug == "debug" ]] && echo $rules | jq .
+                            send_to_bigiq_target $link2 "$rules" PUT
+                        fi
+                    done 
+                done
+            fi
             # Import Policies rules after rules lists, address lists and ports lists imported.
             send_to_bigiq_target $plink "$policyRules" PUT
         done
@@ -386,28 +410,85 @@ else
         differenceReferenceLink=${differenceReferenceLink:1:${#differenceReferenceLink}-2}
         differenceReferenceLink="$differenceReferenceLink/parts/10000000-0000-0000-0000-000000000000"
 
+        echo -e "$(date +'%Y-%d-%m %H:%M'): delete routine"
+        # DELETE
         # policies
-        objectsLinks1=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep policies | grep -v rules | sort -u ) )
-        [[ $debug == "debug" ]] && echo -e "objectsLinks1:"; echo ${objectsLinks1[@]} | tr " " "\n"
+        objectsLinks1=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq '.removed[].fromReference' 2> /dev/null | grep '?generation=' | cut -d\" -f4) )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks1:"
+        [[ $debug == "debug" ]] && echo ${objectsLinks1[@]} | tr " " "\n"
         # rules
-        objectsLinks2=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep policies | grep rules | sort -u ) )
-        [[ $debug == "debug" ]] && echo -e "objectsLinks2:"; echo ${objectsLinks2[@]} | tr " " "\n"
+        objectsLinks2=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq '.changed[].nestedDifferences.removed[].fromReference' 2> /dev/null | grep '?generation=' | cut -d\" -f4  | grep policies | grep rules | sed 's#?generation=.##g') $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq '.removed[].nestedDifferences.removed[].fromReference' 2> /dev/null | grep '?generation=' | cut -d\" -f4 | grep policies | grep rules | sed 's#?generation=.##g') )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks2:"
+        [[ $debug == "debug" ]] && echo ${objectsLinks2[@]} | tr " " "\n"
         # rule-lists
-        objectsLinks3=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep rule-lists | sort -u ) )
-        [[ $debug == "debug" ]] && echo -e "objectsLinks3:"; echo ${objectsLinks3[@]} | tr " " "\n"
+        objectsLinks3=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq '.changed[].nestedDifferences.removed[].fromReference' 2> /dev/null  | grep '?generation=' | cut -d\" -f4 | grep rule-lists | sed 's#?generation=.##g') $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq '.removed[].nestedDifferences.removed[].fromReference' 2> /dev/null | grep '?generation=' | cut -d\" -f4 | grep rule-lists | sed 's#?generation=.##g') )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks3:"
+        [[ $debug == "debug" ]] && echo ${objectsLinks3[@]} | tr " " "\n"
         # port-lists
-        objectsLinks4=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep port-lists| sort -u ) )
-        [[ $debug == "debug" ]] && echo -e "objectsLinks4:"; echo ${objectsLinks4[@]} | tr " " "\n"
+        objectsLinks4=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq '.changed[].nestedDifferences.removed[].fromReference' 2> /dev/null  | grep '?generation=' | cut -d\" -f4 | grep port-lists | sed 's#?generation=.##g') $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq '.removed[].nestedDifferences.removed[].fromReference' 2> /dev/null | grep '?generation=' | cut -d\" -f4 | grep port-lists | sed 's#?generation=.##g'))
+        [[ $debug == "debug" ]] && echo -e "objectsLinks4:"
+        [[ $debug == "debug" ]] && echo ${objectsLinks4[@]} | tr " " "\n"
         # address-lists
-        objectsLinks5=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | sed 's/\\u003d/=/' | grep '?generation=' | cut -d\" -f4 | grep address-lists | sort -u ) )
-        [[ $debug == "debug" ]] && echo -e "objectsLinks5:"; echo ${objectsLinks5[@]} | tr " " "\n"
-            # merge arrays
-        objectsLinks=("${objectsLinks4[@]}" "${objectsLinks5[@]}" "${objectsLinks3[@]}" "${objectsLinks1[@]}" "${objectsLinks2[@]}" )
-        [[ $debug == "debug" ]] && echo -e "objectsLinks:"; echo ${objectsLinks[@]} | tr " " "\n"
-        if [ -z "$objectsLinks" ]; then
-            echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} no objects${NC}"
+        objectsLinks5=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq '.changed[].nestedDifferences.removed[].fromReference' 2> /dev/null  | grep '?generation=' | cut -d\" -f4 | grep address-lists | sed 's#?generation=.##g') $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq '.removed[].nestedDifferences.removed[].fromReference' 2> /dev/null | grep '?generation=' | cut -d\" -f4 | grep address-lists | sed 's#?generation=.##g'))
+        [[ $debug == "debug" ]] && echo -e "objectsLinks5:"
+        [[ $debug == "debug" ]] && echo ${objectsLinks5[@]} | tr " " "\n"
+        # merge arrays
+        objectsLinksRemove=("${objectsLinks4[@]}" "${objectsLinks5[@]}" "${objectsLinks3[@]}" "${objectsLinks1[@]}" "${objectsLinks2[@]}" )
+        [[ $debug == "debug" ]] && echo -e "\nobjectsLinksRemove:"; 
+        [[ $debug == "debug" ]] && echo ${objectsLinksRemove[@]} | tr " " "\n"
+        if [ -z "$objectsLinksRemove" ]; then
+            echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} no objects to delete${NC}"
         else
-            for link in "${objectsLinks[@]}"
+            for link in "${objectsLinksRemove[@]}"
+            do
+                [[ $debug == "debug" ]] && echo
+                echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} $link ${NC}"
+                link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+                if [[ "$link" != "null" ]]; then
+                    object=$(curl -s -H "Content-Type: application/json" -X GET $link&era=$era)
+                    [[ $debug == "debug" ]] && echo $object
+                    send_to_bigiq_target $link "$object" DELETE
+                fi
+            done
+        fi
+
+        echo -e "$(date +'%Y-%d-%m %H:%M'): add and modify routine"
+        ##### ADD AND MODIFY
+        # policies
+        objectsLinks1=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | grep '?generation=' | cut -d\" -f4 | grep policies | grep -v rules | sed 's#?generation=.##g' | sort -u) )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks1:"
+        [[ $debug == "debug" ]] && echo ${objectsLinks1[@]} | tr " " "\n"
+        # rules
+        objectsLinks2=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | grep '?generation=' | cut -d\" -f4 | grep policies | grep rules | sed 's#?generation=.##g' | sort -u) )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks2:"
+        [[ $debug == "debug" ]] && echo ${objectsLinks2[@]} | tr " " "\n"
+        # rule-lists
+        objectsLinks3=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | grep '?generation=' | cut -d\" -f4 | grep rule-lists | sed 's#?generation=.##g' | sort -u ) )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks3:"
+        [[ $debug == "debug" ]] && echo ${objectsLinks3[@]} | tr " " "\n"
+        # port-lists
+        objectsLinks4=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | grep '?generation=' | cut -d\" -f4 | grep port-lists | sed 's#?generation=.##g' | sort -u) )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks4:"
+        [[ $debug == "debug" ]] && echo ${objectsLinks4[@]} | tr " " "\n"
+        # address-lists
+        objectsLinks5=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq . | grep '?generation=' | cut -d\" -f4 | grep address-lists | sed 's#?generation=.##g' | sort -u) )
+        [[ $debug == "debug" ]] && echo -e "objectsLinks5:"
+        [[ $debug == "debug" ]] && echo ${objectsLinks5[@]} | tr " " "\n"
+        # merge arrays
+        objectsLinksAdd=("${objectsLinks4[@]}" "${objectsLinks5[@]}" "${objectsLinks3[@]}" "${objectsLinks1[@]}" "${objectsLinks2[@]}" )
+        [[ $debug == "debug" ]] && echo -e "\nobjectsLinksAdd - before removing the deleted:"; 
+        [[ $debug == "debug" ]] && echo ${objectsLinksAdd[@]} | tr " " "\n"
+        # remove deleted objects from the array
+        for del in ${objectsLinksRemove[@]}
+        do
+            objectsLinksAdd=( "${objectsLinksAdd[@]/$objectsLinksRemove}" )
+        done
+        [[ $debug == "debug" ]] && echo -e "\nobjectsLinksAdd - after removing the deleted:"; 
+        [[ $debug == "debug" ]] && echo ${objectsLinksAdd[@]} | tr " " "\n"
+        if [ -z "$objectsLinksAdd" ]; then
+            echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} no objects to add or modify${NC}"
+        else
+            for link in "${objectsLinksAdd[@]}"
             do
                 [[ $debug == "debug" ]] && echo
                 echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} $link ${NC}"
@@ -416,12 +497,14 @@ else
                     object=$(curl -s -H "Content-Type: application/json" -X GET $link&era=$era)
                     [[ $debug == "debug" ]] && echo $object
                     send_to_bigiq_target $link "$object" POST
+                    [[ $? -ne 0 ]] && send_to_bigiq_target $link "$object" PUT
                 fi
             done
         fi
 
+
         # Delete the old snapshot (we are keeping only lates Snapshot)
-        echo -e "$(date +'%Y-%d-%m %H:%M'): delete snapshot${RED} $previousSnapshotName ${NC}"
+        echo -e "\n$(date +'%Y-%d-%m %H:%M'): delete snapshot${RED} $previousSnapshotName ${NC}"
         curl -s -H "Content-Type: application/json" -X DELETE $previousSnapSelfLink > /dev/null  
     fi
 
