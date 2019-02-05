@@ -22,12 +22,11 @@
 # 01/18/2019: v1.0  r.jouhannet@f5.com     Initial version
 # 01/24/2019: v1.1  r.jouhannet@f5.com     Fix spaces causing issue in JSON objects, move the loop on port/addresses objects under rule-lists
 #                                          Add debug option, add check if the script is already running, add overall runtime.
-# 02/04/2019: v1.2  r.jouhannet@f5.com     Fix port/address nested into rules in policies (not rules lists)
-#                                          Implement Diff between 2 snapshots to find new AFM object and sync to target BIG-IQ
+# 02/05/2019: v1.2  r.jouhannet@f5.com     Fix port/address nested into rules in policies (not rules lists)
+#                                          Implement diff between 2 snapshots to find new AFM object and sync to target BIG-IQ
 #                                          Handle DELETE objects
 #
 #
-# IMPROVEMENTS: authentication to the target BIG-IQ with a token, support nested port/address list.
 
 ## DESCRIPTION
 # Written for BIG-IQ 5.4 and up.
@@ -81,10 +80,12 @@
 #* * * * *
 #
 #
-#
 ## TROUBLESHOOTING
-# To run in debug mode, add debug at the end of the command:
+# To run in debug mode, add "debug" at the end of the command:
 # e.g.: ./sync-shared-afm-objects.sh 10.1.1.4 admin password debug
+#
+# IMPROVEMENTS
+# authentication to the target BIG-IQ with a token, support nested port/address list.
 #
 #########################################################################
 
@@ -167,7 +168,7 @@ elif  [[ -z $1 || -z $2 || -z $3 ]]; then
     echo -e "Usage: ${BLUE}./sync-shared-afm-objects.sh 10.1.1.4 admin password [debug]${NC}\n"
     exit 1;
 else
-    snapshotName="snapshot-firewall-$(date +'%Y%d%m-%H%M')"
+    snapshotName="snapshot-sync-firewall-$(date +'%Y%d%m-%H%M')"
     
     # Create the snapshot
     echo -e "\n$(date +'%Y-%d-%m %H:%M'): create snapshot${RED} $snapshotName ${NC}"
