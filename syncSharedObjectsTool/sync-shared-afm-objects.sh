@@ -116,6 +116,7 @@ send_to_bigiq_target () {
     [[ $debug == "debug" ]] && echo $json | jq .
     # removing "generation": 2, as this is not needed and causing error in the sync
     json=$(echo $json | jq 'del(.generation)')
+    echo $json > send.json
     [[ $debug == "debug" ]] && echo $json | jq .
     method="$3"
     if [[ $method == "PUT" || $method == "DELETE" ]]; then
@@ -136,9 +137,9 @@ send_to_bigiq_target () {
     fi
     [[ $debug == "debug" ]] && echo -e "${RED}$method ${NC}in${GREEN} $url ${NC}"
     if [[ $debug == "debug" ]]; then
-        output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url)
+        output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d @send.json $url)
     else
-        output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d "$json" $url | grep '"code":')
+        output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d @send.json $url | grep '"code":')
     fi
     # If error, return 1
     if [[ $output == *'"code":'* ]]; then
@@ -150,6 +151,8 @@ send_to_bigiq_target () {
 
 if [[  $1 == "reset" ]]; then
     rm previous* 2> /dev/null
+    rm send.json 2> /dev/null
+    rm nohup.out 2> /dev/null
     echo -e "\nInitial export/import will occure next time the script is launched.\n\n${RED}Please re-launch the script.${NC}\n"
     echo -e "Usage: ${BLUE}./sync-shared-afm-objects.sh 10.1.1.4 admin password [debug]${NC}\n"
     exit 1;
