@@ -25,6 +25,9 @@
 # 02/04/2019: v1.2  r.jouhannet@f5.com     Fix port/address nested into rules in policies (not rules lists)
 #                                          Implement Diff between 2 snapshots to find new AFM object and sync to target BIG-IQ
 #                                          Handle DELETE objects
+#
+#
+# IMPROVEMENTS: authentication to the target BIG-IQ with a token, support nested port/address list.
 
 ## DESCRIPTION
 # Written for BIG-IQ 5.4 and up.
@@ -37,15 +40,13 @@
 #         Limiations:
 #           - the script only syncs objects that are in use in the policy
 #           - the script is not syncing the iRules, so those will need to be sync manually if any used in the rules.
-#           - the script wont delete objects on target BIG-IQ if object is deleted on source BIG-IQ
 #           - the script will not import ports/addresses which contains reference to other ports/addresses lists (e.g. ort list nested into a port list)
 #           - the script execution time will depend on the number of objects (e.g. 17.6k objects takes approx ~13 hours)
 #      2. Import in BIG-IQ target objects exported previously
 #   - FOLLOWING EXPORT/IMPORT
 #      1. Make a diff between previous snapshot and current
 #      2. Export from the diff new port lists, address lists, rule lists, policies and policy rules
-#      3. Import in BIG-IQ target objects exported previously
-
+#      3. Import in BIG-IQ target objects exported previously (add/modify/delete)
 
 
 ## INSTRUCTIONS
@@ -204,7 +205,7 @@ else
         policyRuleslink=( $(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/policies?era=$era | jq -r ".items[].rulesCollectionReference.link" 2> /dev/null) )
         for plink in "${policyRuleslink[@]}"
         do
-            echo -e "\n$(date +'%Y-%d-%m %H:%M'): policyRuleslink:${GREEN} $plink ${NC}"
+            echo -e "$(date +'%Y-%d-%m %H:%M'): policyRuleslink:${GREEN} $plink ${NC}"
             # Export policy rule
             plink=$(echo $plink | sed 's#https://localhost/mgmt#http://localhost:8100#g')
             policyRules=$(curl -s -H "Content-Type: application/json" -X GET $plink?era=$era)
