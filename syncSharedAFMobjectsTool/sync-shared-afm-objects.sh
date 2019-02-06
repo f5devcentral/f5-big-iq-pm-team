@@ -359,7 +359,7 @@ else
         else
             for link in "${objectsLinksAdd[@]}"
             do
-              ## Work around after removing the null in the array, it lefts some extra space iterating on the loop
+                ## Work around after removing the null in the array, it lefts some extra space iterating on the loop
                 if [[ $link == *"http"* ]]; then
                     [[ $debug == "debug" ]] && echo
                     echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} $link ${NC}"
