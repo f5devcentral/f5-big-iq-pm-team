@@ -194,12 +194,12 @@ else
     echo -e "$(date +'%Y-%d-%m %H:%M'): snapshot${RED} $snapshotName ${NC}creation completed: era =${RED} $era ${NC}"
 
     # If previousSnapshotName does not exist, do the initial export/import of the AFM objects (this can take a while)
-    if [ ! -f ./previousSnapshotName ]; then
+    if [ ! -f $home/previousSnapshotName ]; then
         echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} INITIAL EXPORT/IMPORT${NC}"
         # save snapshot name and link ref
-        echo $snapshotName > previousSnapshotName
-        echo $snapSelfLink > previousSnapSelfLink
-        echo $snapshotReferenceLink > previousSnapshotReferenceLink
+        echo $snapshotName > $home/previousSnapshotName
+        echo $snapSelfLink > $home/previousSnapSelfLink
+        echo $snapshotReferenceLink > $home/previousSnapshotReferenceLink
 
         # Export port-lists
         echo -e "$(date +'%Y-%d-%m %H:%M'): port-lists"
