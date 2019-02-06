@@ -380,7 +380,7 @@ else
 
         # Roll over logs and cleanup
         if [ ! -f $home/sync-shared-afm-objects_$(date +'%Y%d%m').log.gz ]; then
-            echo -e "\n$(date +'%Y-%d-%m %H:%M'): archive/cleanup logs"
+            echo -e "$(date +'%Y-%d-%m %H:%M'): archive/cleanup logs"
             mv $home/sync-shared-afm-objects.log $home/sync-shared-afm-objects_$(date +'%Y%d%m').log 2> /dev/null
             gzip $home/sync-shared-afm-objects_$(date +'%Y%d%m').log 2> /dev/null
             # delete archive older than $days
