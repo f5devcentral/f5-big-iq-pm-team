@@ -27,7 +27,7 @@
 #                                          Handle DELETE objects
 # 02/06/2019: v1.3  r.jouhannet@f5.com     Update sync all objects all at once (speeding up initial import), add logs management
 # 02/07/2019: v1.4  r.jouhannet@f5.com     Add name of the objects added/deleted/modified
-#                                          Nested port-lists/address-lists supported
+#                                          Nested port-lists/address-lists support
 #
 
 ## DESCRIPTION
