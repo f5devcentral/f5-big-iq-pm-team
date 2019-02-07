@@ -143,9 +143,9 @@ send_to_bigiq_target () {
     # no need to have a JSON payload for the DELETE
     if [[ $method == "DELETE" ]]; then
         if [[ $debug == "debug" ]]; then
-            output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method  $url)
+            output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method $url)
         else
-            output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method | grep '"code":')
+            output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method $url | grep '"code":')
         fi
     else
         if [[ $debug == "debug" ]]; then
@@ -156,8 +156,10 @@ send_to_bigiq_target () {
     fi
     # If error, return 1 (use in the "FOLLOWING EXPORT/IMPORT" part for add/modify in case POST fails, try PUT, might not be necessary
     if [[ $output == *'"code":'* ]]; then
-        # Showing error code if any
-        echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} ERROR: $output ${NC}"
+        # Showing error code if any (except "Duplicate item. Key already exists")
+        if [[ $output != *'Duplicate item. Key already exists'* ]]; then
+            echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} ERROR: $output ${NC}"
+        fi
         return 1
     else
         return 0
@@ -395,7 +397,7 @@ else
             echo -e "$(date +'%Y-%d-%m %H:%M'):${BLUE} ${#objectsLinksRemove[@]} ${NC}object(s) to delete."
             for link in "${objectsLinksRemove[@]}"
             do
-                if [[ "$link" != "null" ]]; then
+                if [[ $link == *"http"* ]]; then
                     link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                     # Important here, we refer to the previous snapshot for the deleted object => $previousEra
                     object=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$previousEra)
@@ -449,7 +451,7 @@ else
             for link in "${objectsLinksAdd[@]}"
             do
                 ## Work around after removing the null in the array, it lefts some extra space iterating on the loop
-                if [[ $link == *"http"* && "$link" != "null" ]]; then
+                if [[ $link == *"http"* ]]; then
                     link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
                     # Here we can refer to the new snapshot => $era
                     object=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
