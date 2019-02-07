@@ -82,7 +82,8 @@
 ## TROUBLESHOOTING
 # To run in debug mode, add "debug" at the end of the command:
 # e.g.: ./sync-shared-afm-objects.sh 10.1.1.4 admin password debug >> /shared/scripts/sync-shared-afm-objects.log
-# Look at the log sync-shared-afm-objects.log
+# Look at the log sync-shared-afm-objects.log (e.g. look for error code in the logs such as "code":400)
+#
 
 #########################################################################
 # CONFIGURATION
