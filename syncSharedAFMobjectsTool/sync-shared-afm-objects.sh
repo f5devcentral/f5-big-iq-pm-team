@@ -97,20 +97,22 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Prevent the script to run twice
+# prevent the script to run twice
 already=$(ps -ef | grep "$0" | grep bash | grep -v grep | wc -l)
 if [ $already -gt 2 ]; then
     echo "The script is already running. Exiting."
     exit 1
 fi
 
+# SECONDS used for total execution time (see end of the script)
 SECONDS=0
+# Script parameters
 bigiqIpTarget=$1
 bigiqAdminTarget=$2
 bigiqPasswordTarget=$3
 debug=$4
 
-# Function to send JSON to BIG-IQ target
+# function to send JSON to BIG-IQ target
 send_to_bigiq_target () {
     # parameter 1 is the URL, parameter 2 is the JSON payload, parameter 3 is the method (PUT or POST)
     json="$2"
@@ -137,6 +139,7 @@ send_to_bigiq_target () {
         fi
     fi
     [[ $debug == "debug" ]] && echo -e "${RED}$method ${NC}in${GREEN} $url ${NC}"
+    # no need to have a JSON payload for the DELETE
     if [[ $method == "DELETE" ]]; then
         if [[ $debug == "debug" ]]; then
             output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method  $url)
@@ -150,8 +153,9 @@ send_to_bigiq_target () {
             output=$(curl -s -k -u "$bigiqAdminTarget:$bigiqPasswordTarget" -H "Content-Type: application/json" -X $method -d @send.json $url | grep '"code":')
         fi
     fi
-    # If error, return 1
+    # If error, return 1 (use in the "FOLLOWING EXPORT/IMPORT" part for add/modify in case POST fails, try PUT, might not be necessary
     if [[ $output == *'"code":'* ]]; then
+        # Showing error code if any
         echo $output
         return 1
     else
@@ -160,6 +164,7 @@ send_to_bigiq_target () {
 }
 
 if [[  $1 == "reset" ]]; then
+    # reset option to allow script to do initial import/export part
     rm $home/previous* 2> /dev/null
     rm $home/send.json 2> /dev/null
     rm $home/nohup.out 2> /dev/null
@@ -203,7 +208,7 @@ else
     snapshotReferenceLink=${snapshotReferenceLink:1:${#snapshotReferenceLink}-2}
     echo -e "$(date +'%Y-%d-%m %H:%M'): snapshot${RED} $snapshotName ${NC}creation completed ( era =${RED} $era ${NC})"
 
-    # If previousSnapshotName does not exist, do the initial export/import of the AFM objects (this can take a while)
+    # if previousSnapshotName does not exist, do the initial export/import of the AFM objects (this can take a while, e.g. ~1h30 for 14k objects)
     if [ ! -f $home/previousSnapshotName ]; then
         echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} INITIAL EXPORT/IMPORT${NC}"
         # save snapshot name and link ref
@@ -287,7 +292,7 @@ else
         echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} FOLLOWING EXPORT/IMPORT${NC}"
         # If previousSnapshot file exist, we are going to do a diff between this snapshot and the one new one created at the begining of the script
         # so we don't re-import all the AFM objects but only the diff 
-        #
+        
         # Retreive previous snapshot name
         previousSnapshotName=$(cat $home/previousSnapshotName)
         previousSnapSelfLink=$(cat $home/previousSnapSelfLink)
@@ -331,7 +336,7 @@ else
         [[ $debug == "debug" ]] && echo $differenceReferenceLink
 
         echo -e "$(date +'%Y-%d-%m %H:%M'): delete routine"
-        # DELETE
+        ##### DELETE
         # policies
         objectsLinks1=( $(curl -s -H "Content-Type: application/json" -X GET $differenceReferenceLink | jq '.removed[].fromReference' 2> /dev/null | grep '?generation=' | cut -d\" -f4 | sed 's#?generation=.*##g') )
         [[ $debug == "debug" ]] && echo -e "objectsLinks1:"
@@ -429,11 +434,11 @@ else
             done
         fi
 
-        # Delete the old snapshot (we are keeping only lates Snapshot)
+        # delete the old snapshot (we are keeping only lates Snapshot)
         echo -e "$(date +'%Y-%d-%m %H:%M'): delete snapshot${RED} $previousSnapshotName ${NC}"
         curl -s -H "Content-Type: application/json" -X DELETE $previousSnapSelfLink > /dev/null  
 
-        # Roll over logs and cleanup
+        # roll over logs and cleanup
         if [ ! -f $home/sync-shared-afm-objects_$(date +'%Y%d%m').log.gz ]; then
             echo -e "$(date +'%Y-%d-%m %H:%M'): archive/cleanup logs"
             mv $home/sync-shared-afm-objects.log $home/sync-shared-afm-objects_$(date +'%Y%d%m').log 2> /dev/null
@@ -446,6 +451,7 @@ else
     # cleanup send.json
     rm $home/send.json 2> /dev/null
 
+    # total script execution time
     echo -e "$(date +'%Y-%d-%m %H:%M'): elapsed time:${RED} $(($SECONDS / 3600))hrs $((($SECONDS / 60) % 60))min $(($SECONDS % 60))sec${NC}"
 
     exit 0;
