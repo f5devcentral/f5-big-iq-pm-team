@@ -85,9 +85,6 @@
 # e.g.: ./sync-shared-afm-objects.sh 10.1.1.4 admin password debug >> /shared/scripts/sync-shared-afm-objects.log
 # Look at the log sync-shared-afm-objects.log
 #
-# IMPROVEMENTS
-# authentication to the target BIG-IQ with a token, support nested port/address list.
-#
 #########################################################################
 # CONFIGURATION
 # Directory where is stored the script
