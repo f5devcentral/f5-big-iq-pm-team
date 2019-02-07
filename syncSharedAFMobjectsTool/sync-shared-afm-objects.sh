@@ -220,7 +220,7 @@ else
 
         # Export port-lists
         array=( $(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/port-lists?era=$era | jq -r ".items[].selfLink" 2> /dev/null) )
-        echo -e "$(date +'%Y-%d-%m %H:%M'): port-lists (${#array[@]})"
+        echo -e "$(date +'%Y-%d-%m %H:%M'): port-lists ${BLUE}(${#array[@]})${NC}"
         for link in "${array[@]}"
         do
             link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
@@ -251,7 +251,7 @@ else
 
         # Export address-lists
         array=( $(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/adc-core/working-config/net/ip-address-lists?era=$era | jq -r ".items[].selfLink" 2> /dev/null) )
-        echo -e "$(date +'%Y-%d-%m %H:%M'): address-lists (${#array[@]})"
+        echo -e "$(date +'%Y-%d-%m %H:%M'): address-lists ${BLUE}(${#array[@]})${NC}"
         for link in "${array[@]}"
         do
             link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
@@ -282,7 +282,7 @@ else
 
         # Export rule-lists (no nested rule-lists possible)
         array=( $(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/rule-lists?era=$era | jq -r ".items[].selfLink" 2> /dev/null) )
-        echo -e "$(date +'%Y-%d-%m %H:%M'): rule-lists (${#array[@]})"
+        echo -e "$(date +'%Y-%d-%m %H:%M'): rule-lists ${BLUE}(${#array[@]})${NC}"
         for link in "${array[@]}"
         do
             link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
@@ -294,19 +294,25 @@ else
         done
 
         # Export policy
-        echo -e "$(date +'%Y-%d-%m %H:%M'): policies"
+        echo -e "$(date +'%Y-%d-%m %H:%M'): all policies"
         policy=$(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/policies?era=$era)
         [[ $debug == "debug" ]] && echo $policy | jq .
         send_to_bigiq_target http://localhost:8100/cm/firewall/working-config/policies "$policy" PUT
 
         # Export policy rules
         array=( $(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/policies?era=$era | jq -r ".items[].rulesCollectionReference.link" 2> /dev/null) )
+        echo -e "$(date +'%Y-%d-%m %H:%M'): policies rules ${BLUE}(${#array[@]})${NC}"
         for link in "${array[@]}"
         do
             link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
             item=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
             [[ $debug == "debug" ]] && echo $item | jq .
-            echo -e "$(date +'%Y-%d-%m %H:%M'): policyRuleslink:${GREEN} $link ${NC}"
+            # small loop toget the names
+            array_names=( $(echo $item | jq -r ".items[].name") )
+            for name in "${array_names[@]}"
+            do
+                echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} $name -${GREEN} $link ${NC}"
+            done
             send_to_bigiq_target $link "$item" PUT
         done
     else
