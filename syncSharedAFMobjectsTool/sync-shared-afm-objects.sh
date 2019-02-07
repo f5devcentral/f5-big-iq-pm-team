@@ -225,6 +225,7 @@ else
             link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
             item=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
             [[ $debug == "debug" ]] && echo $item | jq .
+            # for nested object in an object
             nestedLink=$(echo $item | jq -r ".items[].portListReferences[].link" 2> /dev/null)
             if [[ $nestedLink == *"http"* ]]; then
                 item2=$(curl -s -H "Content-Type: application/json" -X GET $nestedLink?era=$era)
@@ -255,6 +256,7 @@ else
             link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
             item=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
             [[ $debug == "debug" ]] && echo $item | jq .
+            # for nested object in an object
             nestedLink=$(echo $item | jq -r ".items[].addressListReferences[].link" 2> /dev/null)
             if [[ $nestedLink == *"http"* ]]; then
                 item2=$(curl -s -H "Content-Type: application/json" -X GET $nestedLink?era=$era)
