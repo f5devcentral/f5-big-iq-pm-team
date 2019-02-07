@@ -237,7 +237,7 @@ else
                     item3=$(curl -s -H "Content-Type: application/json" -X GET $nestedLink3?era=$era)
                     [[ $debug == "debug" ]] && echo $item3 | jq .
                     name3=$(echo $item3 | jq '.name')
-                    echo -e "$(date +'%Y-%d-%m %H:%M'): nested -${RED} $name3 -${GREEN} $nestedLink3 ${NC}"
+                    echo -e "$(date +'%Y-%d-%m %H:%M'): nested2 -${RED} $name3 -${GREEN} $nestedLink3 ${NC}"
                     send_to_bigiq_target $nestedLink3 "$item3" POST         
                 fi
                 name2=$(echo $item2 | jq '.name')
@@ -268,7 +268,7 @@ else
                     item3=$(curl -s -H "Content-Type: application/json" -X GET $nestedLink3?era=$era)
                     [[ $debug == "debug" ]] && echo $item3 | jq .
                     name3=$(echo $item3 | jq '.name')
-                    echo -e "$(date +'%Y-%d-%m %H:%M'): nested -${RED} $name3 -${GREEN} $nestedLink3 ${NC}"
+                    echo -e "$(date +'%Y-%d-%m %H:%M'): nested2 -${RED} $name3 -${GREEN} $nestedLink3 ${NC}"
                     send_to_bigiq_target $nestedLink3 "$item3" POST         
                 fi
                 name2=$(echo $item2 | jq '.name')
