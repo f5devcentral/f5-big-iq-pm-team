@@ -78,13 +78,12 @@
 #│ │ │ │ │";
 #│ │ │ │ │";
 #* * * * *
-#
-#
+
 ## TROUBLESHOOTING
 # To run in debug mode, add "debug" at the end of the command:
 # e.g.: ./sync-shared-afm-objects.sh 10.1.1.4 admin password debug >> /shared/scripts/sync-shared-afm-objects.log
 # Look at the log sync-shared-afm-objects.log
-#
+
 #########################################################################
 # CONFIGURATION
 # Directory where is stored the script
@@ -365,6 +364,7 @@ else
             do
                 if [[ "$link" != "null" ]]; then
                     link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+                    # Important here, we refer to the previous snapshot for the deleted object => $previousEra
                     object=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$previousEra)
                     [[ $debug == "debug" ]] && echo
                     [[ $debug == "debug" ]] && echo $object
@@ -417,6 +417,7 @@ else
                 ## Work around after removing the null in the array, it lefts some extra space iterating on the loop
                 if [[ $link == *"http"* && "$link" != "null" ]]; then
                     link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
+                    # Here we can refer to the new snapshot => $era
                     object=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
                     [[ $debug == "debug" ]] && echo
                     [[ $debug == "debug" ]] && echo $object
