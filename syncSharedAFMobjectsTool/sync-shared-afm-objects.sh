@@ -156,7 +156,7 @@ send_to_bigiq_target () {
     # If error, return 1 (use in the "FOLLOWING EXPORT/IMPORT" part for add/modify in case POST fails, try PUT, might not be necessary
     if [[ $output == *'"code":'* ]]; then
         # Showing error code if any
-        echo $output
+        echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} ERROR: $output ${NC}"
         return 1
     else
         return 0
@@ -229,6 +229,15 @@ else
             if [[ $nestedLink == *"http"* ]]; then
                 item2=$(curl -s -H "Content-Type: application/json" -X GET $nestedLink?era=$era)
                 [[ $debug == "debug" ]] && echo $item2 | jq .
+                # added in case of a nested object in a nested object in an object
+                nestedLink3=$(echo $item2 | jq -r ".items[].portListReferences[].link" 2> /dev/null)
+                if [[ $nestedLink3 == *"http"* ]]; then
+                    item3=$(curl -s -H "Content-Type: application/json" -X GET $nestedLink3?era=$era)
+                    [[ $debug == "debug" ]] && echo $item3 | jq .
+                    name3=$(echo $item3 | jq '.name')
+                    echo -e "$(date +'%Y-%d-%m %H:%M'): nested -${RED} $name3 -${GREEN} $nestedLink3 ${NC}"
+                    send_to_bigiq_target $nestedLink3 "$item3" POST         
+                fi
                 name2=$(echo $item2 | jq '.name')
                 echo -e "$(date +'%Y-%d-%m %H:%M'): nested -${RED} $name2 -${GREEN} $nestedLink ${NC}"
                 send_to_bigiq_target $nestedLink "$item2" POST         
@@ -250,6 +259,15 @@ else
             if [[ $nestedLink == *"http"* ]]; then
                 item2=$(curl -s -H "Content-Type: application/json" -X GET $nestedLink?era=$era)
                 [[ $debug == "debug" ]] && echo $item2 | jq .
+                # added in case of a nested object in a nested object in an object
+                nestedLink3=$(echo $item2 | jq -r ".items[].addressListReferences[].link" 2> /dev/null)
+                if [[ $nestedLink3 == *"http"* ]]; then
+                    item3=$(curl -s -H "Content-Type: application/json" -X GET $nestedLink3?era=$era)
+                    [[ $debug == "debug" ]] && echo $item3 | jq .
+                    name3=$(echo $item3 | jq '.name')
+                    echo -e "$(date +'%Y-%d-%m %H:%M'): nested -${RED} $name3 -${GREEN} $nestedLink3 ${NC}"
+                    send_to_bigiq_target $nestedLink3 "$item3" POST         
+                fi
                 name2=$(echo $item2 | jq '.name')
                 echo -e "$(date +'%Y-%d-%m %H:%M'): nested -${RED} $name2 -${GREEN} $nestedLink ${NC}"
                 send_to_bigiq_target $nestedLink "$item2" POST         
