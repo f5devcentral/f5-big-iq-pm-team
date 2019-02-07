@@ -32,7 +32,7 @@
 
 ## DESCRIPTION
 # Written for BIG-IQ 5.4 and up.
-# Script to export shared AFM objects from 1 BIG-IQ to another.
+# Script to export shared AFM objects (port lists, address lists, rule lists, policies and policy rules) from 1 BIG-IQ to another.
 #
 # The script will:
 #   - Create a AFM snapshot on BIG-IQ source
@@ -40,7 +40,7 @@
 #      1. Export from the snapshot port lists, address lists, rule lists, policies and policy rules
 #         Limiations:
 #           - the script is not syncing the iRules, so those will need to be sync manually if any used in the rules.
-#           - the script will not import ports/addresses which contains reference to other ports/addresses lists (e.g. ort list nested into a port list)
+#           - the duration of the initial sync might take a while depending on the number of objects (for ~12k object ~1h30)
 #      2. Import in BIG-IQ target objects exported previously
 #   - FOLLOWING EXPORT/IMPORT
 #      1. Make a diff between previous snapshot and current
