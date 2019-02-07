@@ -307,7 +307,7 @@ else
             item=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
             [[ $debug == "debug" ]] && echo $item | jq .
             echo -e "$(date +'%Y-%d-%m %H:%M'): policyRuleslink:${GREEN} $link ${NC}"
-            send_to_bigiq_target $plink "$item" PUT
+            send_to_bigiq_target $link "$item" PUT
         done
     else
         echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} FOLLOWING EXPORT/IMPORT${NC}"
