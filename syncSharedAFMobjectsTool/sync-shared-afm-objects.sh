@@ -98,6 +98,7 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Prevent the script to run twice
 already=$(ps -ef | grep "$0" | grep bash | grep -v grep | wc -l)
 if [ $already -gt 2 ]; then
     echo "The script is already running. Exiting."
