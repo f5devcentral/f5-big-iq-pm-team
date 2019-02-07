@@ -26,7 +26,7 @@
 #                                          Implement diff between 2 snapshots to find new AFM object and sync to target BIG-IQ
 #                                          Handle DELETE objects
 # 02/06/2019: v1.3  r.jouhannet@f5.com     Update sync all objects all at once (speeding up initial import), add logs management
-# 02/07/2019: v1.4  r.jouhannet@f5.com     Add name of the objects added/deleted/modified
+# 02/07/2019: v1.4  r.jouhannet@f5.com     Add name of the objects added/deleted/modified, also add the number of objects.
 #                                          Nested port-lists/address-lists support
 #
 
