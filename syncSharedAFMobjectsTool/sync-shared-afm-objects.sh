@@ -470,7 +470,7 @@ else
     fi
 
     # cleanup send.json
-    rm $home/send.json 2> /dev/null
+    rm -f $home/send.json 2> /dev/null
 
     # total script execution time
     echo -e "$(date +'%Y-%d-%m %H:%M'): elapsed time:${RED} $(($SECONDS / 3600))hrs $((($SECONDS / 60) % 60))min $(($SECONDS % 60))sec${NC}"
