@@ -392,6 +392,7 @@ else
             [[ $debug == "debug" ]] && echo $objectsLinksRemove
             echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} no object(s) to delete${NC}"
         else
+            echo -e "$(date +'%Y-%d-%m %H:%M'):${BLUE} ${#objectsLinksRemove[@]} ${NC}object(s) to delete."
             for link in "${objectsLinksRemove[@]}"
             do
                 if [[ "$link" != "null" ]]; then
@@ -444,6 +445,7 @@ else
             [[ $debug == "debug" ]] && echo $objectsLinksAdd
             echo -e "$(date +'%Y-%d-%m %H:%M'):${GREEN} no object(s) to add/modify${NC}"
         else
+            echo -e "$(date +'%Y-%d-%m %H:%M'):${BLUE} ${#objectsLinksAdd[@]} ${NC}object(s) to add/modifiy."
             for link in "${objectsLinksAdd[@]}"
             do
                 ## Work around after removing the null in the array, it lefts some extra space iterating on the loop
