@@ -19,8 +19,8 @@
 # 04/05/2018: v1.0  K.Goodsell@F5.com     Initial version
 # 08/14/2018: v1.1  r.jouhannet@f5.com    Add Apache License, rename the script import-bigip-cert-key-crl.py, update help.
 
-# Note: This script targets the python environment on BIG-IQ 5.3. The python
-# version there is 2.6.6, and a few additional useful libraries are available
+# Note: This script targets the python environment on BIG-IQ 5.4 and above.
+# The python version there is 2.6.6, and a few additional useful libraries are available
 # (such as argparse). Eventually making this work in generic Linux environments
 # shouldn't be too difficult.
 

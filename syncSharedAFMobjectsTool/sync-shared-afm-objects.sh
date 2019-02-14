@@ -28,6 +28,7 @@
 # 02/06/2019: v1.3  r.jouhannet@f5.com     Update sync all objects all at once (speeding up initial import), add logs management
 # 02/07/2019: v1.4  r.jouhannet@f5.com     Add name of the objects added/deleted/modified, also add the number of objects.
 #                                          Nested port-lists/address-lists support
+# 02/14/2019: v1.5  r.jouhannet@f5.com     Fix issue while importing rules inside the rule-lists
 #
 
 ## DESCRIPTION
@@ -282,17 +283,27 @@ else
             send_to_bigiq_target $link "$item" POST         
         done
 
-        # Export rule-lists (no nested rule-lists possible)
-        array=( $(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/rule-lists?era=$era | jq -r ".items[].selfLink" 2> /dev/null) )
-        echo -e "$(date +'%Y-%d-%m %H:%M'): rule-lists ${BLUE}(${#array[@]})${NC}"
+        # Export rule-lists
+        echo -e "$(date +'%Y-%d-%m %H:%M'): all rules-lists"
+        rulelists=$(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/rule-lists?era=$era)
+        [[ $debug == "debug" ]] && echo $rulelists | jq .
+        send_to_bigiq_target http://localhost:8100/cm/firewall/working-config/rule-lists "$rulelists" PUT
+
+        # Export rule-lists rules
+        array=( $(curl -s -H "Content-Type: application/json" -X GET http://localhost:8100/cm/firewall/working-config/rule-lists?era=$era | jq -r ".items[].rulesCollectionReference.link" 2> /dev/null) )
+        echo -e "$(date +'%Y-%d-%m %H:%M'): rule-lists rules ${BLUE}(${#array[@]})${NC}"
         for link in "${array[@]}"
         do
             link=$(echo $link | sed 's#https://localhost/mgmt#http://localhost:8100#g')
             item=$(curl -s -H "Content-Type: application/json" -X GET $link?era=$era)
             [[ $debug == "debug" ]] && echo $item | jq .
-            name=$(echo $item | jq '.name')
-            echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} $name -${GREEN} $link ${NC}"
-            send_to_bigiq_target $link "$item" POST
+            # small loop toget the names
+            array_names=( $(echo $item | jq -r ".items[].name") )
+            for name in "${array_names[@]}"
+            do
+                echo -e "$(date +'%Y-%d-%m %H:%M'):${RED} $name -${GREEN} $link ${NC}"
+            done
+            send_to_bigiq_target $link "$item" PUT
         done
 
         # Export policy
