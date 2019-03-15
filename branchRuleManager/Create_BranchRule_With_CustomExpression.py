@@ -20,6 +20,10 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json, getpass, sys, os, re
 
+## CHANGE QUEUE
+# 03/14/2019: v1.0  K.Rana@f5.com     Initial version
+
+## DESCRIPTION
 # Script for adding and modifying branch rule with advanced expression to access policy
 
 print "\n\n\nThis script will allow you to set advacnced expression for branch rules in access policies (per-session and per-request)"  
