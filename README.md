@@ -8,4 +8,4 @@ licenseUtilityReport | Perl | Utility Billing Report - Generate a usage report f
 f5sanitizeUsageReport | Bash | Script to obfuscated IP/MAC addresses and Hostnames from a BIG-IQ JSON report.<br/>Usage: ./f5_sanitize_usage_report.sh report.json<br/>/!\ This feature is available in BIG-IQ 6.1 /!\
 SSLcertKeyCRLimportTool | Python | Automate import of SSL Cert, Key & CRL from BIG-IP to BIG-IQ.<br/>https://devcentral.f5.com/articles/automate-import-of-ssl-certificate-key-crl-from-big-ip-to-big-iq-31899
 syncSharedAFMobjectsTool | Bash | Script to export AFM objects (port lists, address lists, rule lists, policies and policy rules) from 1 BIG-IQ to another.<br/>Usage: ./sync-shared-afm-objects.sh <big-iq-ip-target> admin password >> /shared/scripts/sync-shared-afm-objects.log
-branchRuleManager | Python |This script will allow you to set advacnced expression for branch rules in access policies (per-session and per-request).
+branchRuleManager | Python | This script will allow you to set advanced expression for branch rules in access policies (per-session and per-request).
