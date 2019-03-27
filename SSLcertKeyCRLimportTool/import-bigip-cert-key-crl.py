@@ -18,17 +18,15 @@
 
 # 04/05/2018: v1.0  K.Goodsell@F5.com     Initial version
 # 08/14/2018: v1.1  r.jouhannet@f5.com    Add Apache License, rename the script import-bigip-cert-key-crl.py, update help.
-# 08/25/2019: v1.2  K.Goodsell@F5.com     Remove dependency on argparse, not
-#                                         installed on hardware BIG-IQ.
 
-# Note: This script targets the python environment on BIG-IQ 5.3. The python
-# version there is 2.6.6, and a few additional useful libraries are available.
-# Eventually making this work in generic Linux environments shouldn't be too
-# difficult.
+# Note: This script targets the python environment on BIG-IQ 5.4 and above.
+# The python version there is 2.6.6, and a few additional useful libraries are available
+# (such as argparse). Eventually making this work in generic Linux environments
+# shouldn't be too difficult.
 
+import argparse
 import json
 import logging
-import optparse
 import os
 import pickle
 import requests
@@ -582,61 +580,37 @@ def associate_files(session, file_objects):
         success_count,
         len(file_objects))
 
-class Formatter(optparse.IndentedHelpFormatter):
-    '''
-    Help formatter that maintains epilog formatting.
-    '''
-
-    def __init__(*args, **kwargs):
-        optparse.IndentedHelpFormatter.__init__(*args, **kwargs)
-
-    def format_epilog(self, epilog):
-        indent = ' ' * self.current_indent
-        lines = epilog.split('\n')
-        return '\n' + '\n'.join([indent + line for line in lines]) + '\n'
-
 def parse_arguments(args):
-    parser = optparse.OptionParser(
-        formatter=Formatter(),
-        usage='%prog [options] BIG_IP_ADDR',
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description='Automate import of SSL Cert, Key & CRL from BIG-IP to BIG-IQ.',
         epilog='\n'.join([
             "Discover and import LTM services before using this script.",
             "",
-            "All supported file SSL Cert, Key & CRL that exist as unmanaged",
-            "objects on this BIG-IQ which can be found on the target BIG-IP",
-            "will be imported.",
+            "All supported file SSL Cert, Key & CRL that exist as unmanaged objects on this",
+            "BIG-IQ which can be found on the target BIG-IP will be imported.",
             "",
             "The target BIG-IP will be accessed over ssh using the BIG-IP root",
             "account. Enter the root user's password if prompted.",
             "",
-            "Repeat with additional target BIG-IPs to import more file objects."
+            "Repeat with additional target BIG-IPs to import more file objects.",
         ]))
 
-    log_levels = ['debug', 'info', 'warning', 'error', 'critical']
-    parser.add_option('--log-file', '-l', help='log to the given file name')
-    parser.add_option(
+    parser.add_argument('bigip', help='address of BIG-IP to import SSL Cert, Key & CRL from')
+    parser.add_argument('--log-file', '-l', help='log to the given file name')
+    parser.add_argument(
         '--log-level',
-        choices=log_levels,
+        choices=['debug', 'info', 'warning', 'error', 'critical'],
         default='info',
-        help='set logging to the given level (%s, default: info)' % ', '.join(log_levels))
-    parser.add_option('-p', '--port', type=int, help='BIG-IP ssh port (default: 22)')
+        help='set logging to the given level (default: %(default)s)')
+    parser.add_argument('-p', '--port', type=int, help='BIG-IP ssh port (default: 22)')
 
     # Other ideas here include whitelist/blacklist for files to import, options
     # to select which file types to import. But that would just leave some files
     # unmanaged on BIG-IQ, so it's not clear that it would be useful. The user
     # can opt out of certain files by removing the object from BIG-IQ.
 
-    (options, arguments) = parser.parse_args(args)
-
-    if len(arguments) > 1:
-        parser.error('unrecognized arguments: %r' % arguments[1:])
-    elif len(arguments) < 1:
-        parser.error('missing argument BIG_IP_ADDR')
-
-    options.bigip = arguments[0]
-
-    return options
+    return parser.parse_args(args)
 
 ################################################################################
 #
