@@ -28,7 +28,8 @@ BIG-IQ Onboarding with Docker and Ansible
   - Make sure you deploy the instances with min 2 NICs (AWS and Azure)
   - Create an EIP and assign it to the primary interface (AWS)
   - Make sure you have the private key of the Key Pairs selected (AWS and Azure)
-
+  - Reset the admin password ``modify auth password admin`` (AWS and Azure)
+  
 3. From any linux machine, clone the repository
 
 Pre-requisists:
@@ -55,6 +56,11 @@ git clone https://github.com/f5devcentral/f5-big-iq-pm-team.git
 ```
 cd f5-big-iq-pm-team/f5-bigiq-onboarding
 ```
+
+Public Cloud deployments:
+  
+  - bigiq_onboard_discovery_address should be equal to bigiq_onboard_server unless you set a 3rd NIC on a different subnet (AWS and Azure)
+  - 
 
 - if small:
 
@@ -137,3 +143,8 @@ echo >> /var/config/orchestrator/orchestrator.conf
 echo 'VALIDATE_CERTS = "no"' >> /var/config/orchestrator/orchestrator.conf
 bigstart restart gunicorn``
 ```
+
+Troubleshooting
+---------------
+
+n/a
