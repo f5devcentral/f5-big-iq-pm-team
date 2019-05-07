@@ -126,7 +126,7 @@ BIG-IQ Onboarding with Docker and Ansible
 Miscellaneous
 -------------
 
-- In case you need to restore the BIG-IQ system to factory default settings, follow [K15886] article(https://support.f5.com/csp/article/K15886).
+- In case you need to restore the BIG-IQ system to factory default settings, follow [K15886](https://support.f5.com/csp/article/K15886) article.
 
 - Enable basic authentication (**lab only**):
 
