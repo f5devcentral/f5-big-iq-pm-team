@@ -25,6 +25,10 @@ BIG-IQ Onboarding with Docker and Ansible
 
 3. From any linux machine, clone the repository
 
+Pre-requisists:
+  - Install Docker in [AWS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html) or [others](https://docs.docker.com/install/linux/docker-ce/ubuntu/).
+  - Install [git](https://git-scm.com/download/linux).
+
 ```
 git clone https://github.com/f5devcentral/f5-big-iq-pm-team.git
 ```
@@ -35,7 +39,7 @@ git clone https://github.com/f5devcentral/f5-big-iq-pm-team.git
 cd f5-big-iq-pm-team/f5-bigiq-onboarding
 ```
 
-- small:
+- if small:
 
 ```
 vi inventory/group_vars/bigiq-cm-01.yml
@@ -43,7 +47,7 @@ vi inventory/group_vars/bigiq-dcd-01.yml
 vi inventory/hosts
 ```
 
-- medium:
+- if medium:
 
 ```
 vi inventory/group_vars/bigiq-cm-01.yml
@@ -52,7 +56,7 @@ vi inventory/group_vars/bigiq-dcd-02.yml
 vi inventory/hosts
 ```
 
-- large:
+- if large:
 
 ```
 vi inventory/group_vars/bigiq-cm-01.yml
@@ -75,21 +79,21 @@ docker build . -t f5-bigiq-onboarding
 docker run -t f5-bigiq-onboarding ansible-playbook --version
 ```
 
-6. Execute the BIG-IQ onboarding playbooks depending on your configuration
+6. Execute the BIG-IQ onboarding playbooks.
 
-- small:
+- if small:
 
 ```
-./ansible_helper play playbooks/bigiq_onboard_small_standalone_1dcd.yml -i inventory/hosts
+./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_small_standalone_1dcd.yml -i /ansible/inventory/hosts
 ```
 
-- medium:
+- if medium:
 
 ```
 ./ansible_helper play playbooks/bigiq_onboard_medium_standalone_2dcd.yml -i inventory/hosts
 ```
 
-- large:
+- if large:
 
 ```
 ./ansible_helper play playbooks/bigiq_onboard_large_ha_3dcd.yml -i inventory/hosts
@@ -101,13 +105,7 @@ docker run -t f5-bigiq-onboarding ansible-playbook --version
 Miscellaneous
 -------------
 
-- In case you need to restore the BIG-IQ system to factory default settings, follow [K15886 article](https://support.f5.com/csp/article/K15886).
-
-- Enable bash shell by default for admin user:
-
-```
-tmsh modify auth user admin shell bash
-```
+- In case you need to restore the BIG-IQ system to factory default settings, follow [K15886] article(https://support.f5.com/csp/article/K15886).
 
 - Enable basic authentication (**lab only**):
 
