@@ -28,7 +28,18 @@ BIG-IQ Onboarding with Docker and Ansible
     - Make sure you deploy the instances with min 2 NICs (AWS and Azure)
     - Create an EIP and assign it to the primary interface (AWS)
     - Make sure you have the private key of the Key Pairs selected (AWS and Azure)
-    - Reset the admin password ``modify auth password admin`` (AWS and Azure)
+    - Make sure the network security group is correctly setup (AWS and Azure)
+
+      Example: (10.1.0.0/16 being the subnet of the BIG-IQ/DCD)
+
+      Ports | Protocol | Source 
+      ----- | -------- | ------
+      | 80  | tcp      | 0.0.0.0/0 |
+      | 443 | tcp      | 0.0.0.0/0 |
+      |  22 | tcp      | 0.0.0.0/0 |
+      | 1-65356 | tcp  | 10.1.0.0/16 |
+
+    - Set the admin password, SSH to each instances and execute ``modify auth password admin``, ``save sys config`` (AWS and Azure)
   
 3. From any linux machine, clone the repository
 
