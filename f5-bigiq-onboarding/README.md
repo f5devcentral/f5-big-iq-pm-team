@@ -5,23 +5,23 @@ BIG-IQ Onboarding with Docker and Ansible
 
 1. Choose your configuration:
 
-- small: 1 BIG-IQ CM standalone, 1 BIG-IQ DCD
-- medium: 1 BIG-IQ CM standalone, 2 BIG-IQ DCD
-- large: 2 BIG-IQ CM HA, 3 BIG-IQ DCD
+  - small: 1 BIG-IQ CM standalone, 1 BIG-IQ DCD
+  - medium: 1 BIG-IQ CM standalone, 2 BIG-IQ DCD
+  - large: 2 BIG-IQ CM HA, 3 BIG-IQ DCD
 
 2. Deploy BIG-IQ images in your environment
 
-- [AWS](https://aws.amazon.com/marketplace/pp/B00KIZG6KA?qid=1495059228012&sr=0-1&ref_=srh_res_product_title)
-- [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/f5-networks.f5-big-iq?tab=Overview)
-- [VMware](https://downloads.f5.com/esd/eula.sv?sw=BIG-IQ&pro=big-iq_CM&ver=6.1.0&container=v6.1.0&_ga=2.95373976.584487124.1557161462-1415455721.1549652512)
-- [Openstack](https://downloads.f5.com/esd/eula.sv?sw=BIG-IQ&pro=big-iq_CM&ver=6.1.0&container=v6.1.0&_ga=2.200814506.584487124.1557161462-1415455721.1549652512)
-- [HyperV](https://downloads.f5.com/esd/eula.sv?sw=BIG-IQ&pro=big-iq_CM&ver=6.1.0&container=v6.1.0&_ga=2.133130250.584487124.1557161462-1415455721.1549652512)
+  - [AWS](https://aws.amazon.com/marketplace/pp/B00KIZG6KA?qid=1495059228012&sr=0-1&ref_=srh_res_product_title)
+  - [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/f5-networks.f5-big-iq?tab=Overview)
+  - [VMware](https://downloads.f5.com/esd/eula.sv?sw=BIG-IQ&pro=big-iq_CM&ver=6.1.0&container=v6.1.0&_ga=2.95373976.584487124.1557161462-1415455721.1549652512)
+  - [Openstack](https://downloads.f5.com/esd/eula.sv?sw=BIG-IQ&pro=big-iq_CM&ver=6.1.0&container=v6.1.0&_ga=2.200814506.584487124.1557161462-1415455721.1549652512)
+  - [HyperV](https://downloads.f5.com/esd/eula.sv?sw=BIG-IQ&pro=big-iq_CM&ver=6.1.0&container=v6.1.0&_ga=2.133130250.584487124.1557161462-1415455721.1549652512)
 
-  Number of instances to bring up:
+    Number of instances to bring up:
 
-- small: 2 BIG-IQ instances
-- medium: 3 BIG-IQ instances
-- large: 5 BIG-IQ instances
+  - small: 2 BIG-IQ instances
+  - medium: 3 BIG-IQ instances
+  - large: 5 BIG-IQ instances
 
 3. From any linux machine, clone the repository
 
