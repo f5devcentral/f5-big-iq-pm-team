@@ -6,7 +6,7 @@ RUN apt-get update && \
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN pip install ansible    
+RUN pip install ansible  
 
 RUN ansible-galaxy install f5devcentral.f5ansible,master && \
     ansible-galaxy install f5devcentral.bigiq_onboard && \
