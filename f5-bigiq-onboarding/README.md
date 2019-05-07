@@ -35,14 +35,13 @@ BIG-IQ Onboarding with Docker and Ansible
     Pre-requisists:
 
     - Install Docker in [AWS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html) or [others](https://docs.docker.com/install/linux/docker-ce/ubuntu/).
-    - Install [git](https://git-scm.com/download/linux).
+    - Install [Git](https://git-scm.com/download/linux).
 
     Example for Amazon Linux:
     ```
     sudo yum update -y
     sudo amazon-linux-extras install docker -y
     sudo service docker start
-    sudo usermod -a -G docker ec2-user
     sudo yum install git -y
     ```
 

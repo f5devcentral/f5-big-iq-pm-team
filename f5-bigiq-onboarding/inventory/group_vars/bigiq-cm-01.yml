@@ -1,7 +1,7 @@
 bigiq_onboard_server: 10.1.1.4
 bigiq_onboard_hostname: big-iq-cm-01.example.com
 bigiq_onboard_node_type: cm
-bigiq_onboard_discovery_address: 10.1.10.4/24
+#bigiq_onboard_discovery_address: 10.1.10.4/24
 bigiq_onboard_password: admin
 bigiq_onboard_new_root_password: default
 bigiq_onboard_old_root_password: default

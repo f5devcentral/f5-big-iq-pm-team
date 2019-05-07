@@ -1,4 +1,4 @@
-[f5-test-bigiq]
+[f5-bigiq]
 bigiq-cm-01 ansible_host=root@10.1.1.4 ansible_ssh_pass=default
 bigiq-dcd-01 ansible_host=root@10.1.1.6 ansible_ssh_pass=default
 bigiq-dcd-02 ansible_host=root@10.1.1.7 ansible_ssh_pass=default

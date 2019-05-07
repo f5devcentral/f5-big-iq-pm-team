@@ -1,7 +1,7 @@
 bigiq_onboard_server: 10.1.1.6
 bigiq_onboard_hostname: big-iq-dcd-01.example.com
 bigiq_onboard_node_type: dcd
-bigiq_onboard_discovery_address: 10.1.10.6/24
+#bigiq_onboard_discovery_address: 10.1.10.6/24
 bigiq_onboard_password: admin
 bigiq_onboard_new_root_password: default
 bigiq_onboard_old_root_password: default
