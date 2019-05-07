@@ -1,0 +1,50 @@
+---
+- name: tmsh modify auth user admin shell bash
+  hosts: bigiq-cm-01
+  gather_facts: False
+  vars_files:
+    - /ansible/inventory/group_vars/bigiq-dcd-01.yml
+  tasks:
+    - name: tmsh modify auth user admin shell bash
+      raw: bash -c "tmsh modify auth user admin shell bash; tmsh save sys config"
+      ignore_unreachable: yes
+
+- name: tmsh modify auth user admin shell bash
+  hosts: bigiq-dcd-01
+  gather_facts: False
+  vars_files:
+    - /ansible/inventory/group_vars/bigiq-dcd-01.yml
+  tasks:
+    - name: tmsh modify auth user admin shell bash
+      raw: bash -c "tmsh modify auth user admin shell bash; tmsh save sys config"
+      ignore_unreachable: yes
+
+- name: tmsh modify auth user admin shell bash
+  hosts: bigiq-dcd-02
+  gather_facts: False
+  vars_files:
+    - /ansible/inventory/group_vars/bigiq-dcd-02.yml
+  tasks:
+    - name: tmsh modify auth user admin shell bash
+      raw: bash -c "tmsh modify auth user admin shell bash; tmsh save sys config"
+      ignore_unreachable: yes
+  
+- name: tmsh modify auth user admin shell bash
+  hosts: bigiq-dcd-03
+  gather_facts: False
+  vars_files:
+    - /ansible/inventory/group_vars/bigiq-dcd-03.yml
+  tasks:
+    - name: tmsh modify auth user admin shell bash
+      raw: bash -c "tmsh modify auth user admin shell bash; tmsh save sys config"
+      ignore_unreachable: yes
+
+- name: tmsh modify auth user admin shell bash
+  hosts: bigiq-cm-02
+  gather_facts: False
+  vars_files:
+    - /ansible/inventory/group_vars/bigiq-dcd-02.yml
+  tasks:
+    - name: tmsh modify auth user admin shell bash
+      raw: bash -c "tmsh modify auth user admin shell bash; tmsh save sys config"
+      ignore_unreachable: yes
