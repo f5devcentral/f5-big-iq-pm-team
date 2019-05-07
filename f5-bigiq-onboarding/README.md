@@ -19,9 +19,9 @@ BIG-IQ Onboarding with Docker and Ansible
 
   Number of instances to bring up:
 
-    - small: 2 BIG-IQ instances
-    - medium: 3 BIG-IQ instances
-    - large: 5 BIG-IQ instances
+  - small: 2 BIG-IQ instances
+  - medium: 3 BIG-IQ instances
+  - large: 5 BIG-IQ instances
 
 3. From any linux machine, clone the repository
 
