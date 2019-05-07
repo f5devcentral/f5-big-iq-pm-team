@@ -25,10 +25,10 @@ BIG-IQ Onboarding with Docker and Ansible
 
     Public Cloud deployments ([AWS](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-and-amazon-web-services-setup-6-0-0.html)/[Azure](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-and-msft-azure-setup-6-0-0.html)):
 
-    - Make sure you deploy the instances with min 2 NICs (AWS and Azure)
-    - Create an EIP and assign it to the primary interface (AWS)
-    - Make sure you have the private key of the Key Pairs selected (AWS and Azure)
-    - Make sure the network security group is correctly setup (AWS and Azure)
+    - Deploy the instances with min 2 NICs (AWS and Azure)
+    - Create an EIP and assign it to the primary interface for each instances (AWS)
+    - Make sure you have the private key of the Key Pairs selected used by the instances (AWS and Azure)
+    - Configure the network security group for the ingress rules on each instances (AWS and Azure)
 
       Example: (10.1.0.0/16 being the subnet of the BIG-IQ/DCD)
 
@@ -48,7 +48,7 @@ BIG-IQ Onboarding with Docker and Ansible
     - Install Docker in [AWS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html) or [others](https://docs.docker.com/install/linux/docker-ce/ubuntu/).
     - Install [Git](https://git-scm.com/download/linux).
 
-    Example for Amazon Linux:
+    Example for Amazon Linux EC2 instance:
     ```
     sudo yum update -y
     sudo amazon-linux-extras install docker -y
@@ -72,7 +72,7 @@ BIG-IQ Onboarding with Docker and Ansible
   cd f5-big-iq-pm-team/f5-bigiq-onboarding
   ```
 
-  - if small, edit:
+  - if small selected, edit:
 
   ```
   vi inventory/group_vars/bigiq-cm-01.yml
@@ -80,7 +80,7 @@ BIG-IQ Onboarding with Docker and Ansible
   vi inventory/hosts
   ```
 
-  - if medium, edit:
+  - if medium selected, edit:
 
   ```
   vi inventory/group_vars/bigiq-cm-01.yml
@@ -89,7 +89,7 @@ BIG-IQ Onboarding with Docker and Ansible
   vi inventory/hosts
   ```
 
-  - if large, edit:
+  - if large selected, edit:
 
   ```
   vi inventory/group_vars/bigiq-cm-01.yml
@@ -114,19 +114,19 @@ BIG-IQ Onboarding with Docker and Ansible
 
 6. Execute the BIG-IQ onboarding playbooks.
 
-  - if small, run:
+  - if small selected, run:
 
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_small_standalone_1dcd.yml -i /ansible/inventory/hosts
   ```
 
-  - if medium, run:
+  - if medium selected, run:
 
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_medium_standalone_2dcd.yml -i /ansible/inventory/hosts
   ```
 
-  - if large, run:
+  - if large selected, run:
 
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_large_ha_3dcd.yml -i /ansible/inventory/hosts
@@ -139,13 +139,13 @@ Miscellaneous
 
 - In case you need to restore the BIG-IQ system to factory default settings, follow [K15886](https://support.f5.com/csp/article/K15886) article.
 
-- Enable basic authentication (**lab only**):
+- Enable basic authentication (**LAB/POC only**):
 
  ```
  set-basic-auth on
  ```
 
-- Disable SSL authentication for SSG (**lab only**):
+- Disable SSL authentication for SSG (**LAB/POC only**):
 
 ```
 echo >> /var/config/orchestrator/orchestrator.conf
