@@ -4,9 +4,6 @@
   gather_facts: False
   vars_files:
     - /ansible/inventory/group_vars/bigiq-dcd-01.yml
-  pre_tasks:
-    - name: tmsh modify auth user admin shell bash
-      raw: bash -c "tmsh modify auth user admin shell bash; tmsh save sys config"
   roles:
     - { role: f5devcentral.bigiq_onboard }
 
@@ -15,9 +12,6 @@
   gather_facts: False
   vars_files:
     - /ansible/inventory/group_vars/bigiq-cm-01.yml
-  pre_tasks:
-    - name: tmsh modify auth user admin shell bash
-      raw: bash -c "tmsh modify auth user admin shell bash; tmsh save sys config"
   roles:
     - { role: f5devcentral.bigiq_onboard }
 

@@ -30,14 +30,15 @@ BIG-IQ Onboarding with Docker and Ansible
     - Make sure you have the private key of the Key Pairs selected used by the instances (AWS and Azure)
     - Configure the network security group for the ingress rules on each instances (AWS and Azure)
 
-      Example: (10.1.0.0/16 being the subnet of the BIG-IQ/DCD)
+      Example: (10.1.0.0/16 = VPC subnet, 34.132.183.134/32 = [your public IP](https://whatismyipaddress.com))
 
       Ports | Protocol | Source 
       ----- | -------- | ------
-      | 80  | tcp      | 0.0.0.0/0 |
-      | 443 | tcp      | 0.0.0.0/0 |
-      |  22 | tcp      | 0.0.0.0/0 |
-      | 1-65356 | tcp  | 10.1.0.0/16 |
+      | 80  | tcp      | 10.1.0.0/16 |
+      | 443 | tcp      | 10.1.0.0/16 |
+      | 22 | tcp      | 10.1.0.0/16 |
+      | 0-65535 | tcp  | 10.1.0.0/16 |
+      | All traffic | all | 34.132.183.134/32 |
 
     - Set the admin password, SSH to each instances and execute ``modify auth password admin``, ``save sys config`` (AWS and Azure)
   
@@ -110,6 +111,12 @@ BIG-IQ Onboarding with Docker and Ansible
 
   ```
   sudo docker run -t f5-bigiq-onboarding ansible-playbook --version
+  ```
+
+5. Change default shell on all instances to bash
+
+  ```
+  ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_pretasks.yml -i /ansible/inventory/hosts
   ```
 
 6. Execute the BIG-IQ onboarding playbooks.
