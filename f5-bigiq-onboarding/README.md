@@ -17,7 +17,7 @@ BIG-IQ Onboarding with Docker and Ansible
     - [Openstack](https://downloads.f5.com/esd/eula.sv?sw=BIG-IQ&pro=big-iq_CM&ver=6.1.0&container=v6.1.0&_ga=2.200814506.584487124.1557161462-1415455721.1549652512)
     - [HyperV](https://downloads.f5.com/esd/eula.sv?sw=BIG-IQ&pro=big-iq_CM&ver=6.1.0&container=v6.1.0&_ga=2.133130250.584487124.1557161462-1415455721.1549652512)
 
-      Number of instances to bring up:
+  Number of instances to bring up:
 
     - small: 2 BIG-IQ instances
     - medium: 3 BIG-IQ instances
