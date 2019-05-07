@@ -3,7 +3,7 @@
 BIG-IQ Onboarding with Docker and Ansible
 -----------------------------------------
 
-1. Choose your configuration (examples):
+1. Choose your configuration:
 
     - small: 1 BIG-IQ CM standalone, 1 BIG-IQ DCD
     - medium: 1 BIG-IQ CM standalone, 2 BIG-IQ DCD
