@@ -139,7 +139,7 @@ Miscellaneous
 
 - In case you need to restore the BIG-IQ system to factory default settings, follow [K15886](https://support.f5.com/csp/article/K15886) article.
 
-- Enable basic authentication (**LAB/POC only**):
+- Enable basic authentication via API (**LAB/POC only**):
 
  ```
  set-basic-auth on
