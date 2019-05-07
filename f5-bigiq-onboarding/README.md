@@ -19,16 +19,16 @@ BIG-IQ Onboarding with Docker and Ansible
 
   Number of instances to bring up:
 
-  - small: 2 BIG-IQ instances
-  - medium: 3 BIG-IQ instances
-  - large: 5 BIG-IQ instances
+    - small: **2** BIG-IQ instances
+    - medium: **3** BIG-IQ instances
+    - large: **5** BIG-IQ instances
 
   Public Cloud deployments ([AWS](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-and-amazon-web-services-setup-6-0-0.html)/[Azure](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-and-msft-azure-setup-6-0-0.html)):
-  
-  - Make sure you deploy the instances with min 2 NICs (AWS and Azure)
-  - Create an EIP and assign it to the primary interface (AWS)
-  - Make sure you have the private key of the Key Pairs selected (AWS and Azure)
-  - Reset the admin password ``modify auth password admin`` (AWS and Azure)
+
+    - Make sure you deploy the instances with min 2 NICs (AWS and Azure)
+    - Create an EIP and assign it to the primary interface (AWS)
+    - Make sure you have the private key of the Key Pairs selected (AWS and Azure)
+    - Reset the admin password ``modify auth password admin`` (AWS and Azure)
   
 3. From any linux machine, clone the repository
 
@@ -53,16 +53,16 @@ git clone https://github.com/f5devcentral/f5-big-iq-pm-team.git
 
 4. Update the ansible inventory files with the correct information (management IP, self IP, BIG-IQ license, master key, ...)
 
+Public Cloud deployments:
+  - bigiq_onboard_discovery_address should be removed unless you set a 3rd NIC on a different subnet (AWS and Azure)
+
 ```
 cd f5-big-iq-pm-team/f5-bigiq-onboarding
 ```
 
-Public Cloud deployments:
-  
-  - bigiq_onboard_discovery_address should be equal to bigiq_onboard_server unless you set a 3rd NIC on a different subnet (AWS and Azure)
-  - 
 
-- if small:
+
+- if small, edit:
 
 ```
 vi inventory/group_vars/bigiq-cm-01.yml
@@ -70,7 +70,7 @@ vi inventory/group_vars/bigiq-dcd-01.yml
 vi inventory/hosts
 ```
 
-- if medium:
+- if medium, edit:
 
 ```
 vi inventory/group_vars/bigiq-cm-01.yml
@@ -79,7 +79,7 @@ vi inventory/group_vars/bigiq-dcd-02.yml
 vi inventory/hosts
 ```
 
-- if large:
+- if large, edit:
 
 ```
 vi inventory/group_vars/bigiq-cm-01.yml
