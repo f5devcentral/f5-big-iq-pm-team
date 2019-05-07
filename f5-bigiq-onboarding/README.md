@@ -5,9 +5,9 @@ BIG-IQ Onboarding with Docker and Ansible
 
 1. Choose your configuration:
 
-    - Small: 1 BIG-IQ CM standalone, 1 BIG-IQ DCD
-    - Medium: 1 BIG-IQ CM standalone, 2 BIG-IQ DCD
-    - Large: 2 BIG-IQ CM HA, 3 BIG-IQ DCD
+    - **Small**: 1 BIG-IQ CM standalone, 1 BIG-IQ DCD
+    - **Medium**: 1 BIG-IQ CM standalone, 2 BIG-IQ DCD
+    - **Large**: 2 BIG-IQ CM HA, 3 BIG-IQ DCD
 
 2. Deploy BIG-IQ images in your environment.
 
@@ -19,9 +19,9 @@ BIG-IQ Onboarding with Docker and Ansible
 
     Number of instances to bring up:
 
-    - small: **2** BIG-IQ instances
-    - medium: **3** BIG-IQ instances
-    - large: **5** BIG-IQ instances
+    - **Small**: 2 BIG-IQ instances
+    - **Medium**: 3 BIG-IQ instances
+    - **Large**: 5 BIG-IQ instances
 
     Public Cloud deployments ([AWS](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-and-amazon-web-services-setup-6-0-0.html)/[Azure](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-and-msft-azure-setup-6-0-0.html)):
 
@@ -72,7 +72,7 @@ BIG-IQ Onboarding with Docker and Ansible
   cd f5-big-iq-pm-team/f5-bigiq-onboarding
   ```
 
-  - if Small selected, edit:
+  - if **Small** selected, edit:
 
   ```
   vi inventory/group_vars/bigiq-cm-01.yml
@@ -80,7 +80,7 @@ BIG-IQ Onboarding with Docker and Ansible
   vi inventory/hosts
   ```
 
-  - if Medium selected, edit:
+  - if **Medium** selected, edit:
 
   ```
   vi inventory/group_vars/bigiq-cm-01.yml
@@ -89,7 +89,7 @@ BIG-IQ Onboarding with Docker and Ansible
   vi inventory/hosts
   ```
 
-  - if Large selected, edit:
+  - if **Large** selected, edit:
 
   ```
   vi inventory/group_vars/bigiq-cm-01.yml
@@ -114,19 +114,19 @@ BIG-IQ Onboarding with Docker and Ansible
 
 6. Execute the BIG-IQ onboarding playbooks.
 
-  - if Small selected, run:
+  - if **Small** selected, run:
 
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_small_standalone_1dcd.yml -i /ansible/inventory/hosts
   ```
 
-  - if Medium selected, run:
+  - if **Medium** selected, run:
 
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_medium_standalone_2dcd.yml -i /ansible/inventory/hosts
   ```
 
-  - if Large selected, run:
+  - if **Large** selected, run:
 
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_large_ha_3dcd.yml -i /ansible/inventory/hosts
