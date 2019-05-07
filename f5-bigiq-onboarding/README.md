@@ -104,26 +104,25 @@ BIG-IQ Onboarding with Docker and Ansible
 
 6. Execute the BIG-IQ onboarding playbooks.
 
-   - if small, run:
+  - if small, run:
 
-   ```
-   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_small_standalone_1dcd.yml -i /ansible/inventory/hosts
-   ```
+  ```
+  ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_small_standalone_1dcd.yml -i /ansible/inventory/hosts
+  ```
 
-   - if medium, run:
+  - if medium, run:
 
-   ```
-   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_medium_standalone_2dcd.yml -i /ansible/inventory/hosts
-   ```
+  ```
+  ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_medium_standalone_2dcd.yml -i /ansible/inventory/hosts
+  ```
 
-   - if large, run:
+  - if large, run:
 
-   ```
-   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_large_ha_3dcd.yml -i /ansible/inventory/hosts
-   ```
+  ```
+  ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_large_ha_3dcd.yml -i /ansible/inventory/hosts
+  ```
 
 7. Open BIG-IQ CM in a web browser by using the management private or public IP address with https, for example: ``https://<bigiq_mgt_ip>``
-
 
 Miscellaneous
 -------------
