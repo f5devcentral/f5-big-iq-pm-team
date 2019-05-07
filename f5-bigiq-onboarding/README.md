@@ -5,9 +5,9 @@ BIG-IQ Onboarding with Docker and Ansible
 
 1. Choose your configuration:
 
-    - small: 1 BIG-IQ CM standalone, 1 BIG-IQ DCD
-    - medium: 1 BIG-IQ CM standalone, 2 BIG-IQ DCD
-    - large: 2 BIG-IQ CM HA, 3 BIG-IQ DCD
+    - Small: 1 BIG-IQ CM standalone, 1 BIG-IQ DCD
+    - Medium: 1 BIG-IQ CM standalone, 2 BIG-IQ DCD
+    - Large: 2 BIG-IQ CM HA, 3 BIG-IQ DCD
 
 2. Deploy BIG-IQ images in your environment.
 
@@ -72,7 +72,7 @@ BIG-IQ Onboarding with Docker and Ansible
   cd f5-big-iq-pm-team/f5-bigiq-onboarding
   ```
 
-  - if small selected, edit:
+  - if Small selected, edit:
 
   ```
   vi inventory/group_vars/bigiq-cm-01.yml
@@ -80,7 +80,7 @@ BIG-IQ Onboarding with Docker and Ansible
   vi inventory/hosts
   ```
 
-  - if medium selected, edit:
+  - if Medium selected, edit:
 
   ```
   vi inventory/group_vars/bigiq-cm-01.yml
@@ -89,7 +89,7 @@ BIG-IQ Onboarding with Docker and Ansible
   vi inventory/hosts
   ```
 
-  - if large selected, edit:
+  - if Large selected, edit:
 
   ```
   vi inventory/group_vars/bigiq-cm-01.yml
@@ -114,19 +114,19 @@ BIG-IQ Onboarding with Docker and Ansible
 
 6. Execute the BIG-IQ onboarding playbooks.
 
-  - if small selected, run:
+  - if Small selected, run:
 
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_small_standalone_1dcd.yml -i /ansible/inventory/hosts
   ```
 
-  - if medium selected, run:
+  - if Medium selected, run:
 
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_medium_standalone_2dcd.yml -i /ansible/inventory/hosts
   ```
 
-  - if large selected, run:
+  - if Large selected, run:
 
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_large_ha_3dcd.yml -i /ansible/inventory/hosts
