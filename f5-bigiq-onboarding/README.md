@@ -106,7 +106,7 @@ BIG-IQ Onboarding with Docker and Ansible
   sudo docker build . -t f5-bigiq-onboarding
   ```
 
-  Test:
+  Validate Docker and Ansible are working correctly: (Ansible version should be displayed)
 
   ```
   sudo docker run -t f5-bigiq-onboarding ansible-playbook --version
