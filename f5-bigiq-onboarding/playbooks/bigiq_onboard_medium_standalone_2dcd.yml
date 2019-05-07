@@ -3,6 +3,10 @@
   hosts: bigiq-dcd-01
   vars_files:
     - /ansible/inventory/group_vars/bigiq-dcd-01.yml
+  pre_tasks:
+    - name: tmsh modify auth user admin shell bash
+      raw: modify auth user admin shell bash;tmsh modify auth user admin shell bash
+      ignore_errors: yes
   roles:
     - { role: f5devcentral.bigiq_onboard }
 
@@ -10,6 +14,10 @@
   hosts: bigiq-dcd-02
   vars_files:
     - /ansible/inventory/group_vars/bigiq-dcd-02.yml
+  pre_tasks:
+    - name: tmsh modify auth user admin shell bash
+      raw: modify auth user admin shell bash;tmsh modify auth user admin shell bash
+      ignore_errors: yes
   roles:
     - { role: f5devcentral.bigiq_onboard }
 
@@ -17,6 +25,10 @@
   hosts: bigiq-cm-01
   vars_files:
     - /ansible/inventory/group_vars/bigiq-cm-01.yml
+  pre_tasks:
+    - name: tmsh modify auth user admin shell bash
+      raw: modify auth user admin shell bash;tmsh modify auth user admin shell bash
+      ignore_errors: yes
   roles:
     - { role: f5devcentral.bigiq_onboard }
 

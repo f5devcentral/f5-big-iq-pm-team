@@ -1,23 +1,25 @@
 ---
 - name: Set up a DCD BIG-IQ
   hosts: bigiq-dcd-01
+  gather_facts: False
   vars_files:
     - /ansible/inventory/group_vars/bigiq-dcd-01.yml
   pre_tasks:
     - name: tmsh modify auth user admin shell bash
-      bigip_command:
-        commands: tmsh modify auth user admin shell bash
+      raw: modify auth user admin shell bash;tmsh modify auth user admin shell bash
+      ignore_errors: yes
   roles:
     - { role: f5devcentral.bigiq_onboard }
 
 - name: Set up a CM BIG-IQ
   hosts: bigiq-cm-01
+  gather_facts: False
   vars_files:
     - /ansible/inventory/group_vars/bigiq-cm-01.yml
   pre_tasks:
     - name: tmsh modify auth user admin shell bash
-      bigip_command:
-        commands: tmsh modify auth user admin shell bash
+      raw: modify auth user admin shell bash;tmsh modify auth user admin shell bash
+      ignore_errors: yes
   roles:
     - { role: f5devcentral.bigiq_onboard }
 

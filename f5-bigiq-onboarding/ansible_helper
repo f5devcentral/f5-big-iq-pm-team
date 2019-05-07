@@ -1,4 +1,4 @@
-docker run --rm -it \
+sudo docker run --rm -it \
   -v ~/.ssh:/root/.ssh \
   -v $(pwd):/ansible \
   -v /var/log/ansible/ansible.log \
