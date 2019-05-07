@@ -1,4 +1,4 @@
-**UNDER DEVELOPMENT USE AT YOUR OWN RISK**
+**UNDER DEVELOPMENT**
 
 BIG-IQ Onboarding with Docker and Ansible
 -----------------------------------------
@@ -101,7 +101,7 @@ docker run -t f5-bigiq-onboarding ansible-playbook --version
 Miscellaneous
 -------------
 
-- In case you need to restoring the BIG-IQ system to factory default settings, following https://support.f5.com/csp/article/K15886.
+- In case you need to restore the BIG-IQ system to factory default settings, follow [K15886 article](https://support.f5.com/csp/article/K15886).
 
 - Enable bash shell by default for admin user:
 
