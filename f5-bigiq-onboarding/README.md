@@ -17,7 +17,7 @@ BIG-IQ Onboarding with Docker and Ansible
     - [Openstack](https://downloads.f5.com/esd/eula.sv?sw=BIG-IQ&pro=big-iq_CM&ver=6.1.0&container=v6.1.0&_ga=2.200814506.584487124.1557161462-1415455721.1549652512)
     - [HyperV](https://downloads.f5.com/esd/eula.sv?sw=BIG-IQ&pro=big-iq_CM&ver=6.1.0&container=v6.1.0&_ga=2.133130250.584487124.1557161462-1415455721.1549652512)
 
-    For more information, go to the [BIG-IQ Knowledge Center](https://support.f5.com/csp/knowledge-center/software/BIG-IQ?module=BIG-IQ%20Centralized%20Management&version=6.1.0) and follow the setup guide.
+    Go to the [BIG-IQ Knowledge Center](https://support.f5.com/csp/knowledge-center/software/BIG-IQ?module=BIG-IQ%20Centralized%20Management&version=6.1.0) and follow the setup guide.
 
     Number of instances to bring up:
 
@@ -44,12 +44,12 @@ BIG-IQ Onboarding with Docker and Ansible
 
     - Set the admin password, SSH to each instances and execute ``modify auth password admin``, ``save sys config`` (AWS and Azure)
   
-3. From any linux machine, clone the repository
+3. From a linux machine with access to the BIG-IQ instances.
 
     Pre-requisists:
 
-    - Install Docker in [AWS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html) or [others](https://docs.docker.com/install/linux/docker-ce/ubuntu/).
-    - Install [Git](https://git-scm.com/download/linux).
+    - Docker - [AWS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html) or [others](https://docs.docker.com/install/linux/docker-ce/ubuntu/).
+    - [Git](https://git-scm.com/download/linux).
 
     Example for Amazon Linux EC2 instance:
     ```
@@ -65,7 +65,7 @@ BIG-IQ Onboarding with Docker and Ansible
     git clone https://github.com/f5devcentral/f5-big-iq-pm-team.git
     ```
 
-4. Update the ansible inventory files with the correct information (management IP, self IP, BIG-IQ license, master key, ...)
+4. Update the ansible inventory files with the correct information (management IP, self IP, BIG-IQ license, master key, ...).
 
     Recommendations:
     
@@ -103,7 +103,7 @@ BIG-IQ Onboarding with Docker and Ansible
   vi inventory/hosts
   ```
 
-5. Build the Ansible docker images containing the F5 Ansible Galaxy roles
+5. Build the Ansible docker images containing the F5 Ansible Galaxy roles.
 
   ```
   sudo docker build . -t f5-bigiq-onboarding
@@ -115,7 +115,7 @@ BIG-IQ Onboarding with Docker and Ansible
   sudo docker run -t f5-bigiq-onboarding ansible-playbook --version
   ```
 
-5. Change default shell on all instances to bash
+5. Change default shell on all instances to bash.
 
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_pretasks.yml -i /ansible/inventory/hosts
@@ -141,13 +141,13 @@ BIG-IQ Onboarding with Docker and Ansible
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_large_ha_3dcd.yml -i /ansible/inventory/hosts
   ```
 
-7. Open BIG-IQ CM in a web browser by using the management private or public IP address with https, for example: ``https://<bigiq_mgt_ip>``
+7. Open BIG-IQ CM in a web browser by using the management private or public IP address with https, for example: ``https://<bigiq_mgt_ip>``.
 
 8. If you choose the **Large** configuration, follow [BIG-IQ user guide](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-plan-implement-deploy-6-1-0/04.html) to configure HA.
 
-9. Start managing BIG-IP devices from BIG-IQ, follow [BIG-IQ User Guide](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-device-6-1-0/02.html#concept-3571)
+9. Start managing BIG-IP devices from BIG-IQ, follow [BIG-IQ User Guide](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-device-6-1-0/02.html#concept-3571).
 
-For more information, go to the [BIG-IQ Knowledge Center](https://support.f5.com/csp/knowledge-center/software/BIG-IQ?module=BIG-IQ%20Centralized%20Management&version=6.1.0)
+For more information, go to the [BIG-IQ Knowledge Center](https://support.f5.com/csp/knowledge-center/software/BIG-IQ?module=BIG-IQ%20Centralized%20Management&version=6.1.0).
 
 
 Miscellaneous
