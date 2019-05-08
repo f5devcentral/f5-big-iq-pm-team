@@ -143,9 +143,9 @@ BIG-IQ Onboarding with Docker and Ansible
 
 7. Open BIG-IQ CM in a web browser by using the management private or public IP address with https, for example: ``https://<bigiq_mgt_ip>``.
 
-8. If you choose the **Large** configuration, follow [BIG-IQ user guide](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-plan-implement-deploy-6-1-0/04.html) to configure HA.
+8. If you choose the **Large** configuration, go to the [BIG-IQ Knowledge Center](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-plan-implement-deploy-6-1-0/04.html) to configure HA.
 
-9. Start managing BIG-IP devices from BIG-IQ, follow [BIG-IQ User Guide](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-device-6-1-0/02.html#concept-3571).
+9. Start managing BIG-IP devices from BIG-IQ, go to the [BIG-IQ Knowledge Center](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-device-6-1-0/02.html#concept-3571).
 
 For more information, go to the [BIG-IQ Knowledge Center](https://support.f5.com/csp/knowledge-center/software/BIG-IQ?module=BIG-IQ%20Centralized%20Management&version=6.1.0).
 
