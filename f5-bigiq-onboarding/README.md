@@ -48,8 +48,8 @@ BIG-IQ Onboarding with Docker and Ansible
 
     Pre-requisists:
 
-    - Docker - [AWS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html) or [others](https://docs.docker.com/install/linux/docker-ce/ubuntu/).
-    - [Git](https://git-scm.com/download/linux).
+    - [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/) - [AWS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html) or [Azure](https://docs.docker.com/docker-for-azure/)
+    - [Git](https://git-scm.com/download/linux)
 
     Example for Amazon Linux EC2 instance:
     ```
@@ -67,7 +67,7 @@ BIG-IQ Onboarding with Docker and Ansible
 
 4. Update the ansible inventory files with the correct information (management IP, self IP, BIG-IQ license, master key, ...).
 
-    Recommendations:
+    Notes:
     
     - It is not recommended to set ``bigiq_onboard_discovery_address`` for deployment in AWS or Azure (the management IP address will be used automatically if not set). In this case ``register_dcd_dcd_listener`` should be set to the DCD management IP (``bigiq_onboard_server``)
 
