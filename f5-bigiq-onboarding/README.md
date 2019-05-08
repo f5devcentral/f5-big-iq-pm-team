@@ -30,14 +30,14 @@ BIG-IQ Onboarding with Docker and Ansible
     - Make sure you have the private key of the Key Pairs selected used by the instances (AWS and Azure)
     - Configure the network security group for the ingress rules on each instances (AWS and Azure)
 
-      Example: (10.1.0.0/16 = VPC subnet, 34.132.183.134/32 = [your public IP](https://whatismyipaddress.com))
+      *Example for AWS: (10.1.1.0/24 = VPC subnet, sg-06b096098f4 = Security Group Name, 34.132.183.134/32 = [your public IP](https://whatismyipaddress.com))*
 
       Ports | Protocol | Source 
       ----- | -------- | ------
-      | 80  | tcp      | 10.1.0.0/16 |
-      | 443 | tcp      | 10.1.0.0/16 |
-      | 22 | tcp      | 10.1.0.0/16 |
-      | 0-65535 | tcp  | 10.1.0.0/16 |
+      | 80  | tcp | 10.1.1.0/24 |
+      | 443 | tcp | 10.1.1.0/24 |
+      | 22 | tcp | 10.1.1.0/24 |
+      | 0-65535 | tcp | sg-06b096098f4 |
       | All traffic | all | 34.132.183.134/32 |
 
     - Set the admin password, SSH to each instances and execute ``modify auth password admin``, ``save sys config`` (AWS and Azure)
@@ -65,9 +65,9 @@ BIG-IQ Onboarding with Docker and Ansible
 
 4. Update the ansible inventory files with the correct information (management IP, self IP, BIG-IQ license, master key, ...)
 
-    Public Cloud deployments:
+    Recommendations:
     
-    - bigiq_onboard_discovery_address should be removed unless you set a 3rd NIC on a different subnet (AWS and Azure)
+    - It is not recommended to set ``bigiq_onboard_discovery_address`` for deployment in AWS or Azure (the management IP address will be used automatically if not set). In this case ``register_dcd_dcd_listener`` should be set to the DCD management IP (``bigiq_onboard_server``)
 
   ```
   cd f5-big-iq-pm-team/f5-bigiq-onboarding
@@ -140,6 +140,13 @@ BIG-IQ Onboarding with Docker and Ansible
   ```
 
 7. Open BIG-IQ CM in a web browser by using the management private or public IP address with https, for example: ``https://<bigiq_mgt_ip>``
+
+8. If you choose the **Large** configuration, follow [BIG-IQ user guide](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-plan-implement-deploy-6-1-0/04.html) to configure HA.
+
+9. Start managing BIG-IP devices from BIG-IQ, follow [BIG-IQ User Guide](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-device-6-1-0/02.html#concept-3571)
+
+For more information, go to the [BIG-IQ Knowledge Center](https://support.f5.com/csp/knowledge-center/software/BIG-IQ?module=BIG-IQ%20Centralized%20Management&version=6.1.0)
+
 
 Miscellaneous
 -------------
