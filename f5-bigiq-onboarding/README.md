@@ -42,7 +42,7 @@ BIG-IQ Onboarding with Docker and Ansible
       | 0-65535 | tcp | sg-06b096098f4 |
       | All traffic | all | 34.132.183.134/32 |
 
-    - Set the admin password, SSH to each instances and execute ``modify auth password admin``, ``save sys config`` (AWS and Azure)
+      - Copy your private key in the under the f5-bigiq-onboarding directory and name it ``privatekey.pem``.(AWS and Azure)
   
 3. From a linux machine with access to the BIG-IQ instances.
 
@@ -78,6 +78,7 @@ BIG-IQ Onboarding with Docker and Ansible
   - if **Small** selected, edit:
 
   ```
+  vi inventory/group_vars/bigiq-global.yml
   vi inventory/group_vars/bigiq-cm-01.yml
   vi inventory/group_vars/bigiq-dcd-01.yml
   vi inventory/hosts
@@ -86,6 +87,7 @@ BIG-IQ Onboarding with Docker and Ansible
   - if **Medium** selected, edit:
 
   ```
+  vi inventory/group_vars/bigiq-global.yml
   vi inventory/group_vars/bigiq-cm-01.yml
   vi inventory/group_vars/bigiq-dcd-01.yml
   vi inventory/group_vars/bigiq-dcd-02.yml
@@ -95,6 +97,7 @@ BIG-IQ Onboarding with Docker and Ansible
   - if **Large** selected, edit:
 
   ```
+  vi inventory/group_vars/bigiq-global.yml
   vi inventory/group_vars/bigiq-cm-01.yml
   vi inventory/group_vars/bigiq-cm-02.yml
   vi inventory/group_vars/bigiq-dcd-01.yml
@@ -115,8 +118,15 @@ BIG-IQ Onboarding with Docker and Ansible
   sudo docker run -t f5-bigiq-onboarding ansible-playbook --version
   ```
 
-5. Change default shell on all instances to bash.
+5. Change default shell on all instances to bash, and set the admin's password (AWS only).
 
+  AWS only:
+
+  ```
+  ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_pretasks_cloud.yml -i /ansible/inventory/hosts
+  ```
+
+  Others:
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_pretasks.yml -i /ansible/inventory/hosts
   ```

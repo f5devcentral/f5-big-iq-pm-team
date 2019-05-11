@@ -3,6 +3,7 @@
   hosts: bigiq-dcd-01
   gather_facts: False
   vars_files:
+    - /ansible/inventory/group_vars/bigiq-global.yml
     - /ansible/inventory/group_vars/bigiq-dcd-01.yml
   roles:
     - { role: f5devcentral.bigiq_onboard }
@@ -11,6 +12,7 @@
   hosts: bigiq-cm-01
   gather_facts: False
   vars_files:
+    - /ansible/inventory/group_vars/bigiq-global.yml
     - /ansible/inventory/group_vars/bigiq-cm-01.yml
   roles:
     - { role: f5devcentral.bigiq_onboard }
@@ -18,6 +20,7 @@
 - name: Add DCD devices to CM device concurrently
   hosts: bigiq-dcd-01
   vars_files:
+    - /ansible/inventory/group_vars/bigiq-global.yml
     - /ansible/inventory/group_vars/bigiq-dcd-01.yml
   tasks:
     - name: Add DCD to CM
