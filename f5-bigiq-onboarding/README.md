@@ -36,7 +36,7 @@ BIG-IQ Onboarding with Docker and Ansible
     - Copy your private key in the under the f5-bigiq-onboarding directory and name it ``privatekey.pem``and apply correct permission ``chmod 600 privatekey.pem`` (AWS and Azure)
     - Configure the network security group for the ingress rules on each instances (AWS and Azure)
 
-      *Example for AWS: (10.1.1.0/24 = VPC subnet, sg-06b096098f4 = Security Group Name, 34.132.183.134/32 = [your public IP](https://whatismyipaddress.com))*
+      *Example for AWS: (10.1.1.0/24 = VPC subnet, sg-06b096098f4 = Security Group Name, 34.132.183.134/32 = [your public IP](https://www.whatismyip.com))*
 
       Ports | Protocol | Source 
       ----- | -------- | ------
