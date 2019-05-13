@@ -1,6 +1,6 @@
 [f5-bigiq]
-bigiq-cm-01 ansible_host=admin@10.1.1.4 ansible_ssh_pass=admin
-bigiq-dcd-01 ansible_host=admin@10.1.1.6 ansible_ssh_pass=admin
-bigiq-dcd-02 ansible_host=admin@10.1.1.7 ansible_ssh_pass=admin
-bigiq-dcd-03 ansible_host=admin@10.1.1.8 ansible_ssh_pass=admin
-bigiq-cm-02 ansible_host=admin@10.1.1.5 ansible_ssh_pass=admin
+bigiq-cm-01 ansible_host=admin@10.1.1.4 ansible_ssh_pass=admin private_key_file=/ansible/privatekey.pem
+bigiq-dcd-01 ansible_host=admin@10.1.1.6 ansible_ssh_pass=admin private_key_file=/ansible/privatekey.pem
+bigiq-dcd-02 ansible_host=admin@10.1.1.7 ansible_ssh_pass=admin private_key_file=/ansible/privatekey.pem
+bigiq-dcd-03 ansible_host=admin@10.1.1.8 ansible_ssh_pass=admin private_key_file=/ansible/privatekey.pem
+bigiq-cm-02 ansible_host=admin@10.1.1.5 ansible_ssh_pass=admin private_key_file=/ansible/privatekey.pem

@@ -1,5 +1,8 @@
 **UNDER DEVELOPMENT**
 
+Performs a basic series of on-boarding steps to bootstrap a BIG-IQ system
+to the point that it can accept configuration.
+
 BIG-IQ Onboarding with Docker and Ansible
 -----------------------------------------
 
@@ -30,6 +33,7 @@ BIG-IQ Onboarding with Docker and Ansible
     - Deploy the instances with min 2 NICs (AWS and Azure)
     - Create an EIP and assign it to the primary interface for each instances (AWS)
     - Make sure you have the private key of the Key Pairs selected used by the instances (AWS and Azure)
+    - Copy your private key in the under the f5-bigiq-onboarding directory and name it ``privatekey.pem``and apply correct permission ``chmod 600 privatekey.pem`` (AWS and Azure)
     - Configure the network security group for the ingress rules on each instances (AWS and Azure)
 
       *Example for AWS: (10.1.1.0/24 = VPC subnet, sg-06b096098f4 = Security Group Name, 34.132.183.134/32 = [your public IP](https://whatismyipaddress.com))*
@@ -40,9 +44,7 @@ BIG-IQ Onboarding with Docker and Ansible
       | 443 | tcp | 10.1.1.0/24 |
       | 22 | tcp | 10.1.1.0/24 |
       | 0-65535 | tcp | sg-06b096098f4 |
-      | All traffic | all | 34.132.183.134/32 |
-
-      - Copy your private key in the under the f5-bigiq-onboarding directory and name it ``privatekey.pem``.(AWS and Azure)
+      | All traffic | all | 34.132.183.134/32 |      
   
 3. From a linux machine with access to the BIG-IQ instances.
 
@@ -70,6 +72,7 @@ BIG-IQ Onboarding with Docker and Ansible
     Notes:
     
     - It is not recommended to set ``bigiq_onboard_discovery_address`` for deployment in AWS or Azure (the management IP address will be used automatically if not set). In this case ``register_dcd_dcd_listener`` should be set to the DCD management IP (``bigiq_onboard_server``)
+    - ``bigiq_onboard_server`` in AWS and Azure should be the private IP address assigned to eth0
 
   ```
   cd f5-big-iq-pm-team/f5-bigiq-onboarding
@@ -118,15 +121,8 @@ BIG-IQ Onboarding with Docker and Ansible
   sudo docker run -t f5-bigiq-onboarding ansible-playbook --version
   ```
 
-5. Change default shell on all instances to bash, and set the admin's password (AWS only).
+5. Change default shell on all instances to bash, and set the admin's password.
 
-  AWS only:
-
-  ```
-  ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_pretasks_cloud.yml -i /ansible/inventory/hosts
-  ```
-
-  Others:
   ```
   ./ansible_helper ansible-playbook /ansible/playbooks/bigiq_onboard_pretasks.yml -i /ansible/inventory/hosts
   ```
