@@ -30,11 +30,11 @@ BIG-IQ Onboarding with Docker and Ansible
 
     Public Cloud deployments ([AWS](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-and-amazon-web-services-setup-6-0-0.html)/[Azure](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-and-msft-azure-setup-6-0-0.html)):
 
-    - Deploy the instances with min 2 NICs (AWS and Azure)
-    - Create an EIP and assign it to the primary interface for each instances (AWS)
-    - Make sure you have the private key of the Key Pairs selected used by the instances (AWS and Azure)
-    - Copy your private key in the under the f5-bigiq-onboarding directory and name it ``privatekey.pem``and apply correct permission ``chmod 600 privatekey.pem`` (AWS and Azure)
-    - Configure the network security group for the ingress rules on each instances (AWS and Azure)
+    - Deploy the instances with min 2 NICs
+    - Create an EIP and assign it to the primary interfaces for each instances 
+    - Make sure you have the private key of the Key Pairs selected used by the instances
+    - Copy your private key in the under the f5-bigiq-onboarding directory and name it ``privatekey.pem``and apply correct permission ``chmod 600 privatekey.pem``
+    - Configure the network security group for the ingress rules on each instances
 
       *Example for AWS: (10.1.1.0/24 = VPC subnet, sg-06b096098f4 = Security Group Name, 34.132.183.134/32 = [your public IP](https://www.whatismyip.com))*
 
