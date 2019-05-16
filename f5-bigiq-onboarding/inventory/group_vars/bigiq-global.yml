@@ -13,10 +13,17 @@ bigiq_onboard_ntp_servers:
   - time.nist.gov
 bigiq_onboard_timezone: America/Los_Angeles
 
+## Enable basic auth
+bigiq_onboard_set_basic_auth: true
+
+### Force re-running the role
+bigiq_onboard_force: false
+
 register_dcd_cm_user: admin
 register_dcd_cm_password: admin
 register_dcd_dcd_user: admin
 register_dcd_dcd_password: admin
+# List of services to activate for data collection.
 register_dcd_dcd_services:
   - asm
 #  - afm

@@ -24,9 +24,9 @@ BIG-IQ Onboarding with Docker and Ansible
 
     Number of instances to bring up:
 
-    - **Small**: 2 BIG-IQ instances
-    - **Medium**: 3 BIG-IQ instances
-    - **Large**: 5 BIG-IQ instances
+    - **Small**: 2 BIG-IQ instances (1 for CM, 1 for DCD)
+    - **Medium**: 3 BIG-IQ instances (1 for CM, 2 for DCD)
+    - **Large**: 5 BIG-IQ instances (2 for CM, 3 for DCD)
 
     Public Cloud deployments ([AWS](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-and-amazon-web-services-setup-6-0-0.html)/[Azure](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-and-msft-azure-setup-6-0-0.html)):
 
@@ -46,9 +46,7 @@ BIG-IQ Onboarding with Docker and Ansible
       | 0-65535 | tcp | sg-06b096098f4 |
       | All traffic | all | 34.132.183.134/32 |      
   
-3. From a linux machine with access to the BIG-IQ instances.
-
-    Pre-requisists:
+3. From a linux machine with access to the BIG-IQ instances, install docker and git.
 
     - [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/) - [AWS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html) or [Azure](https://docs.docker.com/docker-for-azure/)
     - [Git](https://git-scm.com/download/linux)
@@ -61,7 +59,7 @@ BIG-IQ Onboarding with Docker and Ansible
     sudo yum install git -y
     ```
 
-    Clone the repository:
+    Then, clone the repository:
 
     ```
     git clone https://github.com/f5devcentral/f5-big-iq-pm-team.git
