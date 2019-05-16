@@ -56,10 +56,10 @@ BIG-IQ Onboarding with Docker and Ansible
       | 0-65535 | tcp | sg-06b096098f4 |
       | All traffic | all | 34.132.183.134/32 |      
   
-3. From a linux machine with access to the BIG-IQ instances, install docker and git.
+3. From a linux machine with access to the BIG-IQ instances.
 
-    - [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/) - [AWS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html) or [Azure](https://docs.docker.com/docker-for-azure/)
-    - [Git](https://git-scm.com/download/linux)
+    - Install [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/) ([AWS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html) or [Azure](https://docs.docker.com/docker-for-azure/))
+    - Install [Git](https://git-scm.com/download/linux)
 
     Example for Amazon Linux EC2 instance:
     ```
