@@ -3,6 +3,16 @@
 Performs a basic series of on-boarding steps to bootstrap a BIG-IQ system
 to the point that it can accept configuration.
 
+This tool can be used for *lab*, *proof of concept* or *production* BIG-IQ deployments.
+
+It provides examples of 3 type of configurations, small, medium or large which can be adapted depending on customer's network/size/requirements.
+
+Consult the [Planning and Implementing a BIG-IQ Centralized Management Deployment](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-centralized-management-plan-implement-deploy-6-1-0.html) for for details.
+
+![Deployment Diagram](./images/diagram_onboarding.png)
+
+The tool is using Ansible Galaxy Role along with a docker container to execute the playbooks. This can be executed from your local machine or a remote linux machine as long as it has network connectivity to the management IP addresses of the targeted BIG-IQ instances to onboard/configure.
+
 BIG-IQ Onboarding with Docker and Ansible
 -----------------------------------------
 
