@@ -1,8 +1,8 @@
-bigiq_onboard_password: admin
+bigiq_onboard_password: "{{ hostvars[inventory_hostname].ansible_ssh_pass }}"
 bigiq_onboard_new_root_password: default
 bigiq_onboard_old_root_password: default
 bigiq_onboard_new_admin_password: admin
-bigiq_onboard_old_admin_password: admin
+bigiq_onboard_old_admin_password: "{{ hostvars[inventory_hostname].ansible_ssh_pass }}"
 #This passphrase is used as a seed to encrypt data that
 # The master passphrase to set on the device
 #
