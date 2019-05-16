@@ -2,11 +2,12 @@
 ansible_user=admin
 ansible_ssh_pass=admin
 ansible_port=22
+# Create the private key used to access the instance in AWS/Azure in PEM format
 private_key_file=/ansible/privatekey.pem
 
 [f5-bigiq]
-bigiq-cm-01 ansible_host=admin@10.1.1.4 
-bigiq-dcd-01 ansible_host=admin@10.1.1.6
-bigiq-dcd-02 ansible_host=admin@10.1.1.7
-bigiq-dcd-03 ansible_host=admin@10.1.1.8
-bigiq-cm-02 ansible_host=admin@10.1.1.5
+bigiq-cm-01.lab.local ansible_host=10.1.1.4 
+bigiq-dcd-01.lab.local ansible_host=10.1.1.6
+bigiq-dcd-02.lab.local ansible_host=10.1.1.7
+bigiq-dcd-03.lab.local ansible_host=10.1.1.8
+bigiq-cm-02.lab.local ansible_host=10.1.1.5

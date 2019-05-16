@@ -1,5 +1,5 @@
-bigiq_onboard_server: 10.1.1.5
-bigiq_onboard_hostname: big-iq-cm-02.example.com
+bigiq_onboard_server: "{{ ansible_host }}"
+bigiq_onboard_hostname: "{{ inventory_hostname }}"
 bigiq_onboard_node_type: cm
 bigiq_onboard_license_key: W7910-531806-979-9214061-0509584
 ### Discovery address Self-IP to set

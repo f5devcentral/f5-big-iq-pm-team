@@ -3,6 +3,25 @@ bigiq_onboard_new_root_password: default
 bigiq_onboard_old_root_password: default
 bigiq_onboard_new_admin_password: admin
 bigiq_onboard_old_admin_password: admin
+#This passphrase is used as a seed to encrypt data that
+# The master passphrase to set on the device
+#
+# This passphrase is used as a seed to encrypt data that
+# is stored in BIG-IQ. It must meet certain complexity
+# requirements before BIG-IQ will accept it.
+#
+# These are,
+#
+#  * 16 characters long
+#
+# and must contain at least
+#
+#  * one uppercase
+#  * one letter
+#  * one lower case letter
+#  * one number
+#  * special character
+#
 bigiq_onboard_master_passphrase: Thisisthemasterkey#1234
 bigiq_onboard_dns_nameservers:
   - 8.8.8.8
@@ -11,6 +30,13 @@ bigiq_onboard_dns_search:
   - example.com
 bigiq_onboard_ntp_servers:
   - time.nist.gov
+# The timezone to set on the BIG-IQ device
+#
+# This timezone should be specified in the "TZ" format as seen
+# here
+#
+#  * https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+#
 bigiq_onboard_timezone: America/Los_Angeles
 
 ## Enable basic auth
