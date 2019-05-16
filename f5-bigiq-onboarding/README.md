@@ -11,7 +11,7 @@ Consult the [Planning and Implementing a BIG-IQ Centralized Management Deploymen
 
 ![Deployment Diagram](./images/diagram_onboarding.png)
 
-The tool is using Ansible Galaxy Role along with a docker container to execute the playbooks. This can be executed from your local machine or a remote linux machine as long as it has network connectivity to the management IP addresses of the targeted BIG-IQ instances to onboard/configure.
+The tool is using Ansible Galaxy Role along with a docker container to execute the playbooks. It can be launched from your local machine or a remote linux machine as long as it has network connectivity to the management IP addresses of the targeted BIG-IQ instances to onboard/configure.
 
 BIG-IQ Onboarding with Docker and Ansible
 -----------------------------------------
