@@ -4,7 +4,6 @@ This GitHub Repository is managed by the F5 BIG-IQ Product Management Team.
 
 Tools | Language | Description
 ------------ | ------------- | -------------
-f5-bigiq-onboarding | Ansible | Playbooks to onboard BIG-IQ CM and DCD. See [instructions](f5-bigiq-onboarding).<br/>/!\ **Under development** /!\
 f5-bigiq-licenseUtilityReport | Perl | Utility Billing Report - Generate a usage report for your utility license(s) and provide to F5 Networks Inc. for billing purposes.<br/>See article on [devcentral](https://devcentral.f5.com/articles/generation-of-utility-billing-report-using-big-iqs-api-30193)<br/>/!\ **This feature is available in BIG-IQ 6.1** /!\
 f5-bigiq-f5sanitizeUsageReport | Bash | Script to obfuscated IP/MAC addresses and Hostnames from a BIG-IQ JSON report.<br/>Usage: ./f5_sanitize_usage_report.sh report.json<br/>/!\ **This feature is available in BIG-IQ 6.1** /!\
 f5-bigiq-SSLcertKeyCRLimportTool | Python | Automate import of SSL Cert, Key & CRL from BIG-IP to BIG-IQ.<br/>See article on [devcentral](https://devcentral.f5.com/articles/automate-import-of-ssl-certificate-key-crl-from-big-ip-to-big-iq-31899)
