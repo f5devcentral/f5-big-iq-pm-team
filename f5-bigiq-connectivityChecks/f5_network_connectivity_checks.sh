@@ -43,6 +43,9 @@ arraylengthportdcdbigip=${#portdcdbigip[@]}
 # BIG-IQ CM => DCD
 portcmdcd[0]=443
 portcmdcd[1]=22
+portcmdcd[2]=9300 #cluster
+portcmdcd[3]=28015 #api
+portcmdcd[4]=29015 #cluster
 arraylengthportcmdcd=${#portcmdcd[@]}
 
 # Requirements for BIG-IQ HA peers
@@ -57,16 +60,7 @@ portha[6]=2224 #PCS (BIG_IQ 7.0)
 portha[7]=5404 #corosync (BIG_IQ 7.0)
 arraylengthportha=${#portha[@]}
 
-# Requirements for BIG-IQ Data Collection Devices (DCD)
-# BIG-IQ DCDs <=> DCDs
-portdcd[0]=443
-portdcd[1]=22
-portdcd[2]=9300 #cluster
-portdcd[3]=28015 #api
-portdcd[4]=29015 #cluster
-arraylengthportdcd=${#portdcd[@]}
-
-# NC
+# nc command
 nc="nc -z -v -w5"
 
 #################################################################################
@@ -146,9 +140,6 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
         $nc ${dcdip[$i]} ${portcmdcd[$j]}
     done
   done
-
-  #echo -e "\n*** TEST BIG-IQ DCDs <=> DCDs"
-  ### TO DO
 fi
 
 if [[ $ha = "yes"* ]]; then
