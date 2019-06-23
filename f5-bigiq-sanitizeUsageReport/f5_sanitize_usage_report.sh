@@ -1,5 +1,7 @@
-#!/bin/bash
- 
+#!/usr/bin/env bash
+# Uncomment set command below for code debugging bash
+#set -x
+
 #################################################################################
 # Copyright 2018 by F5 Networks, Inc.
 #

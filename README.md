@@ -9,3 +9,4 @@ f5-bigiq-f5sanitizeUsageReport | Bash | Script to obfuscated IP/MAC addresses an
 f5-bigiq-SSLcertKeyCRLimportTool | Python | Automate import of SSL Cert, Key & CRL from BIG-IP to BIG-IQ.<br/>See article on [devcentral](https://devcentral.f5.com/articles/automate-import-of-ssl-certificate-key-crl-from-big-ip-to-big-iq-31899)
 f5-bigiq-syncSharedAFMobjectsTool | Bash | Script to export AFM objects (port lists, address lists, rule lists, policies and policy rules) from 1 BIG-IQ to another.<br/>Usage: ./sync-shared-afm-objects.sh <big-iq-ip-target> admin password >> /shared/scripts/sync-shared-afm-objects.log
 f5-bigiq-branchRuleManager | Python | This script will allow you to set advanced expression for branch rules in access policies (per-session and per-request).
+f5-bigiq-connectivityChecks | Bash | This script will run a sequence checks to verify connectivity between BIG-IQ CM, DCD and BIG-IPs.

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Uncomment set command below for code debugging bash
 #set -x
 
