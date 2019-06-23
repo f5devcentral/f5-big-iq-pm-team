@@ -167,6 +167,8 @@ if [[ $ha = "yes"* ]]; then
   echo -e "BIG-IQ $ipcm2 root password"
   ssh -o StrictHostKeyChecking=no -oCheckHostIP=no root@$ipcm2 $cmd
   echo
+
+  echo -e "Note: If you are not using BIG-IQ 7.0 new HA feature, 2224 and 5404 ports checks can be ignored."
 fi
 
 echo -e "End."
