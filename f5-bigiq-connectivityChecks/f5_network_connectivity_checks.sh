@@ -18,7 +18,7 @@
 #limitations under the License.
 #################################################################################
 
-# 06/23/2019: v1.0  r.jouhannet@f5.com     Initial version
+# 06/23/2019: v1.0  r.jouhannet@f5.com     Initial version (does not support BIG-IP 14.1)
 
 # K15612: Connectivity requirements for the BIG-IQ system
 # https://support.f5.com/csp/article/K15612
@@ -162,4 +162,4 @@ if [[ $ha = "yes"* ]]; then
   echo -e "Note: If you are not using BIG-IQ 7.0 new HA feature, 2224 and 5404 ports checks can be ignored."
 fi
 
-echo -e "End."
+echo -e "\nEnd."
