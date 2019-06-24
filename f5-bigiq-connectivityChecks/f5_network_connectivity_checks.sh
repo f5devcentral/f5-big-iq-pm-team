@@ -63,7 +63,7 @@ portha[5]=29015,tcp #cluster
 arraylengthportha=${#portha[@]}
 
 function connection_check() {
-  timeout 1 bash -c "cat < /dev/null > /dev/$1/$2/$3"
+  timeout 1 bash -c "cat < /dev/null > /dev/$1/$2/$3" &>/dev/null
   if [  $? == 0 ]; then
     echo -e "Connection to $2 $3 port [$1] succeeded!"
   else
@@ -94,7 +94,7 @@ do_corosync_check() {
   if [[ $? -ne 0 ]]; then
     echo "Corosync check Failed for device $1 (UDP 5404 and 5405)"
   else
-    echo "Corosync check succeded for $1 (UDP 5404 and 5405)"
+    echo "Corosync check succeeded for $1 (UDP 5404 and 5405)"
   fi
 }
 
@@ -104,7 +104,7 @@ do_corosync_check() {
 PROG=${0##*/}
 set -u
 
-echo -e "\nNote: you may use the BIG-IQ CM/DCD self IPs depending on your network architecure."
+echo -e "\nNote: you may use the BIG-IQ CM/DCD self IPs depending on your network architecture."
 
 echo -e "\nBIG-IQ CM Primary IP address:"
 read ipcm1
@@ -112,7 +112,7 @@ read ipcm1
 echo -e "\nBIG-IQ HA? (yes/no)"
 read ha
 if [[ $ha = "yes"* ]]; then
-  echo -e "BIG-IQ CM Seconday IP address:"
+  echo -e "BIG-IQ CM Secondary IP address:"
   read ipcm2
   echo -e "BIG-IQ Quorum DCD IP address (only if Auto-failover HA):"
   read ipquorum
@@ -170,7 +170,7 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
     echo
   done
 
-  echo -e "\nNote: FPS uses port 8008, DoS uses port 8020, AFM uses port 8018, ASM uses port 8514 and Access/IPsec uses port 9997.\n If you are not using those modules, ignore the failure."
+  echo -e "\nNote: FPS uses port 8008, DoS uses port 8020, AFM uses port 8018, ASM uses port 8514 and Access/IPsec uses port 9997.\nIf you are not using those modules, ignore the failure."
 
   echo -e "\n*** TEST BIG-IQ CM => DCD"
   for (( i=0; i<${arraylengthdcdip}; i++ ));
@@ -189,7 +189,7 @@ if [[ $ha = "yes"* ]]; then
       connection_check ${portha[$j]:(-3)} $ipcm2 ${portha[$j]%,*}
   done
 
-  echo -e "\n*** TEST BIG-IQ CM Secondary <= CM Primary"
+  echo -e "\n*** TEST BIG-IQ CM Secondary => CM Primary"
   cmd=""
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
@@ -202,7 +202,7 @@ if [[ $ha = "yes"* ]]; then
   if [ ! -z "$ipquorum" ]; then
     do_pcs_check $ipcm2
     do_pcs_check $ipquorum
-    do_corosync_check $ipcm1
+
     do_corosync_check $ipcm2
     do_corosync_check $ipquorum
   fi
