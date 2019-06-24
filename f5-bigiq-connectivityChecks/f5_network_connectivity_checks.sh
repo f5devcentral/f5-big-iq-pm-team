@@ -3,7 +3,7 @@
 #set -x
 
 #################################################################################
-# Copyright 2018 by F5 Networks, Inc.
+# Copyright 2019 by F5 Networks, Inc.
 #
 #Licensed under the Apache License, Version 2.0 (the "License");
 #you may not use this file except in compliance with the License.
@@ -18,50 +18,86 @@
 #limitations under the License.
 #################################################################################
 
-# 06/23/2019: v1.0  r.jouhannet@f5.com     Initial version (does not support BIG-IP 14.1)
+# 06/24/2019: v1.0  r.jouhannet@f5.com    Initial version
 
 # K15612: Connectivity requirements for the BIG-IQ system
 # https://support.f5.com/csp/article/K15612
+# https://techdocs.f5.com/en-us/bigiq-6-1-0/big-iq-centralized-management-plan-implement-deploy-6-1-0/planning-a-big-iq-centralized-management-deployment.html
+
+# Download the script with curl:
+# curl https://raw.githubusercontent.com/f5devcentral/f5-big-iq-pm-team/master/f5-bigiq-connectivityChecks/f5_network_connectivity_checks.sh > f5_network_connectivity_checks.sh
 
 # Requirements for BIG-IQ management and Requirements for BIG-IP device discovery, management, and monitoring
 # BIG-IQ CM => BIG-IPs
-portcmbigip[0]=443
-portcmbigip[1]=22
+portcmbigip[0]=443,tcp
+portcmbigip[1]=22,tcp
 arraylengthportcmbigip=${#portcmbigip[@]}
 
 # Requirements for BIG-IP to BIG-IQ Data Collection Devices (DCD)
 # BIG-IPs => BIG-IQ DCDs
-portdcdbigip[0]=443 #AVR
-portdcdbigip[1]=8008 #FPS
-portdcdbigip[2]=8020 #DoS
-portdcdbigip[3]=8018 #AFM
-portdcdbigip[4]=8514 #ASM
-portdcdbigip[5]=9997 #access/IPsec
+portdcdbigip[0]=443,tcp #AVR
+portdcdbigip[1]=8008,tcp #FPS
+portdcdbigip[2]=8020,tcp #DoS
+portdcdbigip[3]=8018,tcp #AFM
+portdcdbigip[4]=8514,tcp #ASM
+portdcdbigip[5]=9997,tcp #access/IPsec
 arraylengthportdcdbigip=${#portdcdbigip[@]}
 
 # Requirements for BIG-IQ management and Data Collection Devices (DCD)
 # BIG-IQ CM => DCD
-portcmdcd[0]=443
-portcmdcd[1]=22
-portcmdcd[2]=9300 #cluster
-portcmdcd[3]=28015 #api
-portcmdcd[4]=29015 #cluster
+portcmdcd[0]=443,tcp
+portcmdcd[1]=22,tcp
+portcmdcd[2]=9300,tcp #cluster
+portcmdcd[3]=28015,tcp #api
+portcmdcd[4]=29015,tcp #cluster
 arraylengthportcmdcd=${#portcmdcd[@]}
 
 # Requirements for BIG-IQ HA peers
-# BIG-IQ CM <=> CM
-portha[0]=443
-portha[1]=22
-portha[2]=9300 #cluster
-portha[3]=27017 #sync db
-portha[4]=28015 #api
-portha[5]=29015 #cluster
-portha[6]=2224 #PCS (BIG_IQ 7.0)
-portha[7]=5404 #corosync (BIG_IQ 7.0)
+# BIG-IQ CM <=> CM + Quorum DCD
+portha[0]=443,tcp
+portha[1]=22,tcp
+portha[2]=9300,tcp #cluster
+portha[3]=27017,tcp #sync db
+portha[4]=28015,tcp #api
+portha[5]=29015,tcp #cluster
 arraylengthportha=${#portha[@]}
 
-# nc command
-nc="nc -z -v -w5"
+function connection_check() {
+  timeout 1 bash -c "cat < /dev/null > /dev/$1/$2/$3"
+  if [  $? == 0 ]; then
+    echo -e "Connection to $2 $3 port [$1] succeeded!"
+  else
+    echo -e "Connection to $2 $3 port [$1] failed!"
+  fi
+}
+
+# Active/Standby/Quorum DCD (BIG_IQ 7.0 and above)
+do_pcs_check() {
+  # PCS uses tcp port 2224 for communication
+  echo -e "BIG-IQ $1 root password"
+  ssh -o StrictHostKeyChecking=no -oCheckHostIP=no -f root@$1 'nohup sh -c "( ( nc -vl 2224 &>/dev/null) & )"'
+  # to make sure ssh has returned.
+  sleep 1
+  nc -zv -w 2 $1 2224 &>/dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "PCS check Failed for device $1 (TCP 2224)"
+  else
+    echo "PCS check succeeded for $1 (TCP 2224)"
+  fi
+}
+
+do_corosync_check() {
+  # Corosync sends the data using udp port 5404 and receives the data using udp port 5405
+  nc -zvu -p 5404 -w 2 $1 5405 &>/dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Corosync check Failed for device $1 (UDP 5404 and 5405)"
+  else
+    echo "Corosync check succeded for $1 (UDP 5404 and 5405)"
+  fi
+}
+
 
 #################################################################################
 
@@ -78,6 +114,8 @@ read ha
 if [[ $ha = "yes"* ]]; then
   echo -e "BIG-IQ CM Seconday IP address:"
   read ipcm2
+  echo -e "BIG-IQ Quorum DCD IP address (only if Auto-failover HA):"
+  read ipquorum
 fi
 
 echo
@@ -110,7 +148,7 @@ if [[ $arraylengthbigipip -gt 0 ]]; then
   do
     for (( j=0; j<${arraylengthportcmbigip}; j++ ));
     do
-        $nc ${bigipip[$i]} ${portcmbigip[$j]} 
+        connection_check ${portcmbigip[$j]:(-3)} ${bigipip[$i]} ${portcmbigip[$j]%,*} 
     done
   done
 fi
@@ -124,42 +162,50 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
       cmd=""
       for (( k=0; k<${arraylengthportdcdbigip}; k++ ));
       do
-        cmd="$nc ${dcdip[$j]} ${portdcdbigip[$k]} ; $cmd"
+        cmd="connection_check ${portdcdbigip[$k]:(-3)} ${dcdip[$j]} ${portdcdbigip[$k]%,*} ; $cmd"
       done
     done
     echo -e "BIG-IP ${bigipip[$i]} root password"
-    ssh -o StrictHostKeyChecking=no -oCheckHostIP=no root@${bigipip[$i]} $cmd
+    ssh -o StrictHostKeyChecking=no -oCheckHostIP=no root@${bigipip[$i]} "$(typeset -f connection_check); $cmd"
     echo
   done
+
+  echo -e "\nNote: FPS uses port 8008, DoS uses port 8020, AFM uses port 8018, ASM uses port 8514 and Access/IPsec uses port 9997.\n If you are not using those modules, ignore the failure."
 
   echo -e "\n*** TEST BIG-IQ CM => DCD"
   for (( i=0; i<${arraylengthdcdip}; i++ ));
   do
     for (( j=0; j<${arraylengthportcmdcd}; j++ ));
     do
-        $nc ${dcdip[$i]} ${portcmdcd[$j]}
+        connection_check ${portcmdcd[$j]:(-3)} ${dcdip[$i]} ${portcmdcd[$j]%,*}
     done
   done
 fi
 
 if [[ $ha = "yes"* ]]; then
-  echo -e "\n*** TEST BIG-IQ CM Primary => CM Secondary"
+  echo -e "\n***HA\n\n*** TEST BIG-IQ CM Primary => CM Secondary"
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
-      $nc $ipcm2 ${portha[$j]}
+      connection_check ${portha[$j]:(-3)} $ipcm2 ${portha[$j]%,*}
   done
 
   echo -e "\n*** TEST BIG-IQ CM Secondary <= CM Primary"
   cmd=""
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
-    cmd="$nc $ipcm1 ${portha[$j]} ; $cmd"
+    cmd="connection_check ${portha[$j]:(-3)} $ipcm1 ${portha[$j]%,*} ; $cmd"
   done
   echo -e "BIG-IQ $ipcm2 root password"
-  ssh -o StrictHostKeyChecking=no -oCheckHostIP=no root@$ipcm2 $cmd
+  ssh -o StrictHostKeyChecking=no -oCheckHostIP=no root@$ipcm2 "$(typeset -f connection_check); $cmd"
   echo
 
-  echo -e "Note: If you are not using BIG-IQ 7.0 new HA feature, 2224 and 5404 ports checks can be ignored."
+  if [ ! -z "$ipquorum" ]; then
+    do_pcs_check $ipcm2
+    do_pcs_check $ipquorum
+    do_corosync_check $ipcm1
+    do_corosync_check $ipcm2
+    do_corosync_check $ipquorum
+  fi
 fi
 
 echo -e "\nEnd."
