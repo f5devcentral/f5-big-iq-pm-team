@@ -48,8 +48,8 @@ arraylengthportdcdbigip=${#portdcdbigip[@]}
 portcmdcd[0]=443,tcp
 portcmdcd[1]=22,tcp
 portcmdcd[2]=9300,tcp #cluster
-portcmdcd[3]=28015,tcp #api
-portcmdcd[4]=29015,tcp #cluster
+#portcmdcd[3]=28015,tcp #api ---- should be removed
+#portcmdcd[4]=29015,tcp #cluster ---- should be removed
 arraylengthportcmdcd=${#portcmdcd[@]}
 
 # Requirements for BIG-IQ HA peers
@@ -65,15 +65,15 @@ arraylengthportha=${#portha[@]}
 function connection_check() {
   timeout 1 bash -c "cat < /dev/null > /dev/$1/$2/$3" &>/dev/null
   if [  $? == 0 ]; then
-    echo -e "Connection to $2 $3 port [$1] succeeded!"
+    echo -e "Connection to $2 port $3 [$1] succeeded!"
   else
-    echo -e "Connection to $2 $3 port [$1] failed!"
+    echo -e "Connection to $2 port $3 [$1] failed!"
   fi
 }
 
 # Active/Standby/Quorum DCD (BIG_IQ 7.0 and above)
 do_pcs_check() {
-  # PCS uses tcp port 2224 for communication
+  # Pacemaker uses tcp port 2224 for communication
   echo -e "BIG-IQ $1 root password"
   ssh -o StrictHostKeyChecking=no -oCheckHostIP=no -f root@$1 'nohup sh -c "( ( nc -vl 2224 &>/dev/null) & )"'
   # to make sure ssh has returned.
@@ -81,9 +81,9 @@ do_pcs_check() {
   nc -zv -w 2 $1 2224 &>/dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "PCS check Failed for device $1 (TCP 2224)"
+    echo "Pacemaker check failed for $1 port 2224 [tcp]"
   else
-    echo "PCS check succeeded for $1 (TCP 2224)"
+    echo "Pacemaker check succeeded for $1 port 2224 [tcp]"
   fi
 }
 
@@ -92,9 +92,9 @@ do_corosync_check() {
   nc -zvu -p 5404 -w 2 $1 5405 &>/dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Corosync check Failed for device $1 (UDP 5404 and 5405)"
+    echo "Corosync check failed for $1 ports 5404, 5404 [udp]"
   else
-    echo "Corosync check succeeded for $1 (UDP 5404 and 5405)"
+    echo "Corosync check succeeded for $1 ports 5404, 5404 [udp]"
   fi
 }
 
@@ -197,13 +197,16 @@ if [[ $ha = "yes"* ]]; then
   done
   echo -e "BIG-IQ $ipcm2 root password"
   ssh -o StrictHostKeyChecking=no -oCheckHostIP=no root@$ipcm2 "$(typeset -f connection_check); $cmd"
-  echo
 
   if [ ! -z "$ipquorum" ]; then
+    echo -e "\n*** TEST BIG-IQ CM Secondary => CM Primary"
     do_pcs_check $ipcm2
+    echo -e "\n*** TEST BIG-IQ DCD Quorum => CM Primary"
     do_pcs_check $ipquorum
 
+    echo -e "\n*** TEST BIG-IQ CM Primary => CM Seconday"
     do_corosync_check $ipcm2
+    echo -e "\n*** TEST BIG-IQ CM Primary => DCD Quorum"
     do_corosync_check $ipquorum
   fi
 fi
