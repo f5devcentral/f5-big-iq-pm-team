@@ -19,6 +19,10 @@
 #################################################################################
 
 # 06/24/2019: v1.0  r.jouhannet@f5.com    Initial version
+# 06/25/2019: v1.1  r.jouhannet@f5.com    Add option for user and ssh key for BIG-IP and BIG-IQ
+
+# Usage:
+#./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
 
 # K15612: Connectivity requirements for the BIG-IQ system
 # https://support.f5.com/csp/article/K15612
@@ -28,6 +32,25 @@
 
 # Download the script with curl:
 # curl https://raw.githubusercontent.com/f5devcentral/f5-big-iq-pm-team/master/f5-bigiq-connectivityChecks/f5_network_connectivity_checks.sh > f5_network_connectivity_checks.sh
+
+# 
+bigipsshuser="$1"
+bigipsshkey="$3"
+if [ -z "$bigipsshuser" ]; then
+  bigipsshuser="root"
+fi
+if [ ! -z "$bigipsshkey" ]; then
+  bigipsshkey="-i $bigipsshkey"
+fi
+
+bigiqsshuser="$2"
+bigiqsshkey="$4"
+if [ -z "$bigiqsshuser" ]; then
+  bigiqsshuser="root"
+fi
+if [ ! -z "$bigiqsshkey" ]; then
+  bigiqsshkey="-i $bigiqsshkey"
+fi
 
 # Requirements for BIG-IQ management and Requirements for BIG-IP device discovery, management, and monitoring
 # BIG-IQ CM => BIG-IPs
@@ -84,8 +107,8 @@ nc="nc -z -v -w5"
 # Active/Standby/Quorum DCD (BIG_IQ 7.0 and above)
 do_pcs_check() {
   # Pacemaker uses tcp port 2224 for communication
-  echo -e "BIG-IQ $1 root password"
-  ssh -o StrictHostKeyChecking=no -o CheckHostIP=no -f root@$1 'nohup sh -c "( ( nc -vl 2224 &>/dev/null) & )"'
+  echo -e "BIG-IQ $1 $bigiqsshuser password"
+  ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no -f $bigiqsshuser@$1 'nohup sh -c "( ( nc -vl 2224 &>/dev/null) & )"'
   # to make sure ssh has returned.
   sleep 1
   nc -zv -w 2 $1 2224 &>/dev/null
@@ -178,8 +201,8 @@ if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
         cmd="connection_check ${portdcdbigip[$k]:(-3)} ${dcdip[$j]} ${portdcdbigip[$k]%,*} ; $cmd"
       done
     done
-    echo -e "BIG-IP ${bigipip[$i]} root password"
-    ssh -o StrictHostKeyChecking=no -o CheckHostIP=no root@${bigipip[$i]} "$(typeset -f connection_check); $cmd"
+    echo -e "BIG-IP ${bigipip[$i]} $bigipsshuser password"
+    ssh $bigipsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigipsshuser@${bigipip[$i]} "$(typeset -f connection_check); $cmd"
     echo
   done
 
@@ -204,8 +227,8 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
     do
       cmd="$nc $ipcm1 ${portdcdcm[$j]%,*} ; $cmd"
     done
-    echo -e "BIG-IQ ${dcdip[$i]} root password"
-    ssh -o StrictHostKeyChecking=no -o CheckHostIP=no root@${dcdip[$i]} $cmd
+    echo -e "BIG-IQ ${dcdip[$i]} $bigiqsshuser password"
+    ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@${dcdip[$i]} $cmd
     echo
   done
 fi
@@ -223,8 +246,8 @@ if [[ $ha = "yes"* ]]; then
   do
     cmd="$nc $ipcm1 ${portha[$j]%,*} ; $cmd"
   done
-  echo -e "BIG-IQ $ipcm2 root password"
-  ssh -o StrictHostKeyChecking=no -o CheckHostIP=no root@$ipcm2 $cmd
+  echo -e "BIG-IQ $ipcm2 $bigiqsshuser password"
+  ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$ipcm2 $cmd
 
   if [ ! -z "$ipquorum" ]; then
     echo -e "\nNote: Only for BIG-IQ 7.0 and above and if auto-failover HA is setup."
