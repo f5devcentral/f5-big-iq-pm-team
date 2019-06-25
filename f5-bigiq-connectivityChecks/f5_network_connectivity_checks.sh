@@ -124,7 +124,7 @@ read ha
 if [[ $ha = "yes"* ]]; then
   echo -e "BIG-IQ CM secondary IP address (either active or standby depending where you run the script):"
   read ipcm2
-  echo -e "BIG-IQ Quorum DCD IP address (only if auto-failover HA setup):"
+  echo -e "BIG-IQ Quorum DCD IP address (only if auto-failover HA is setup):"
   read ipquorum
 
   echo -e "\nNote: please, run the script from the secondary BIG-IQ CM active or standby."
@@ -227,6 +227,7 @@ if [[ $ha = "yes"* ]]; then
   ssh -o StrictHostKeyChecking=no -o CheckHostIP=no root@$ipcm2 $cmd
 
   if [ ! -z "$ipquorum" ]; then
+    echo -e "\nNote: Only for BIG-IQ 7.0 and above and if auto-failover HA is setup."
     echo -e "\n*** TEST BIG-IQ current CM => secondary CM"
     do_pcs_check $ipcm2
     echo -e "\n*** TEST BIG-IQ DCD Quorum => current CM"
