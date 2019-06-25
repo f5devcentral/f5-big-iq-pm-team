@@ -11,6 +11,8 @@ Installation instructions
 Usage
 -----
 
+/!\ **This feature is available in BIG-IQ 6.1** /!\
+
 ```
 # cd /shared/scripts
 # ./f5_sanitize_usage_report.sh report.json
