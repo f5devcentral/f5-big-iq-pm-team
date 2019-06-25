@@ -22,7 +22,9 @@
 
 # K15612: Connectivity requirements for the BIG-IQ system
 # https://support.f5.com/csp/article/K15612
-# https://techdocs.f5.com/en-us/bigiq-6-1-0/big-iq-centralized-management-plan-implement-deploy-6-1-0/planning-a-big-iq-centralized-management-deployment.html
+# https://support.f5.com/csp/knowledge-center/software/BIG-IQ?module=BIG-IQ%20Centralized%20Management&version=6.1.0
+#  => Planning and Implementing a BIG-IQ Centralized Management Deployment
+#    => Open ports required for BIG-IQ system deployment
 
 # Download the script with curl:
 # curl https://raw.githubusercontent.com/f5devcentral/f5-big-iq-pm-team/master/f5-bigiq-connectivityChecks/f5_network_connectivity_checks.sh > f5_network_connectivity_checks.sh
@@ -30,7 +32,7 @@
 # Requirements for BIG-IQ management and Requirements for BIG-IP device discovery, management, and monitoring
 # BIG-IQ CM => BIG-IPs
 portcmbigip[0]=443,tcp
-portcmbigip[1]=22,tcp
+portcmbigip[1]=22,tcp # Only required for BIG-IP versions 11.5.0 to 11.6.0
 arraylengthportcmbigip=${#portcmbigip[@]}
 
 # Requirements for BIG-IP to BIG-IQ Data Collection Devices (DCD)
@@ -44,13 +46,17 @@ portdcdbigip[5]=9997,tcp #access/IPsec
 arraylengthportdcdbigip=${#portdcdbigip[@]}
 
 # Requirements for BIG-IQ management and Data Collection Devices (DCD)
-# BIG-IQ CM => DCD
+# BIG-IQ CM => DCDs
 portcmdcd[0]=443,tcp
 portcmdcd[1]=22,tcp
 portcmdcd[2]=9300,tcp #cluster
-portcmdcd[3]=28015,tcp #api
-portcmdcd[4]=29015,tcp #cluster
 arraylengthportcmdcd=${#portcmdcd[@]}
+
+# BIG-IQ DCDs => CM
+portdcdcm[0]=9300,tcp #cluster
+portdcdcm[1]=28015,tcp #api
+portdcdcm[2]=29015,tcp #cluster
+arraylengthportdcdcm=${#portdcdcm[@]}
 
 # Requirements for BIG-IQ HA peers
 # BIG-IQ CM <=> CM + Quorum DCD
@@ -79,7 +85,7 @@ nc="nc -z -v -w5"
 do_pcs_check() {
   # Pacemaker uses tcp port 2224 for communication
   echo -e "BIG-IQ $1 root password"
-  ssh -o StrictHostKeyChecking=no -oCheckHostIP=no -f root@$1 'nohup sh -c "( ( nc -vl 2224 &>/dev/null) & )"'
+  ssh -o StrictHostKeyChecking=no -o CheckHostIP=no -f root@$1 'nohup sh -c "( ( nc -vl 2224 &>/dev/null) & )"'
   # to make sure ssh has returned.
   sleep 1
   nc -zv -w 2 $1 2224 &>/dev/null
@@ -108,7 +114,7 @@ do_corosync_check() {
 PROG=${0##*/}
 set -u
 
-echo -e "\nNote: you may use the BIG-IQ CM/DCD self IPs depending on your network architecture."
+echo -e "\nNote: you may use the BIG-IQ CM/DCD self IPs depending on your network architecture and DCD discovery IP.\nIf you get 'Connection refused', check if the self-ip is used instead of the management interface for discovery IP on the DCDs."
 
 echo -e "\nBIG-IQ CM current IP address (from where you execute this script):"
 read ipcm1
@@ -116,12 +122,12 @@ read ipcm1
 echo -e "\nBIG-IQ HA? (yes/no)"
 read ha
 if [[ $ha = "yes"* ]]; then
-  echo -e "BIG-IQ CM pair IP address (either active or standby depending where you run the script):"
+  echo -e "BIG-IQ CM secondary IP address (either active or standby depending where you run the script):"
   read ipcm2
   echo -e "BIG-IQ Quorum DCD IP address (only if auto-failover HA setup):"
   read ipquorum
 
-  echo -e "\nNote: please, run the script from the other BIG-IQ CM active or standby."
+  echo -e "\nNote: please, run the script from the secondary BIG-IQ CM active or standby."
 fi
 
 echo
@@ -149,17 +155,18 @@ arraylengthbigipip=${#bigipip[@]}
 #################################################################################
 
 if [[ $arraylengthbigipip -gt 0 ]]; then
-  echo -e "\n\n*** TEST BIG-IQ CM => BIG-IPs"
+  echo -e "\n\n*** TEST BIG-IQ current CM => BIG-IPs"
   for (( i=0; i<${arraylengthbigipip}; i++ ));
   do
     for (( j=0; j<${arraylengthportcmbigip}; j++ ));
     do
-        $nc ${portcmbigip[$j]:(-3)} ${bigipip[$i]} ${portcmbigip[$j]%,*} 
+        $nc ${bigipip[$i]} ${portcmbigip[$j]%,*} 
     done
   done
+  echo -e "\nNote: Port 22 (SSH) is only required for BIG-IP versions 11.5.0 to 11.6.0"
 fi
 
-if [[ $arraylengthdcdip -gt 0 ]]; then
+if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
   echo -e "\n*** TEST BIG-IPs => BIG-IQ DCDs"
   for (( i=0; i<${arraylengthbigipip}; i++ ));
   do
@@ -172,47 +179,62 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
       done
     done
     echo -e "BIG-IP ${bigipip[$i]} root password"
-    ssh -o StrictHostKeyChecking=no -oCheckHostIP=no root@${bigipip[$i]} "$(typeset -f connection_check); $cmd"
+    ssh -o StrictHostKeyChecking=no -o CheckHostIP=no root@${bigipip[$i]} "$(typeset -f connection_check); $cmd"
     echo
   done
 
   echo -e "\nNote: FPS uses port 8008, DoS uses port 8020, AFM uses port 8018, ASM uses port 8514 and Access/IPsec uses port 9997.\nIf you are not using those modules, ignore the failure."
+fi
 
-  echo -e "\n*** TEST BIG-IQ CM => DCD"
+if [[ $arraylengthdcdip -gt 0 ]]; then
+  echo -e "\n*** TEST BIG-IQ current CM => DCDs"
   for (( i=0; i<${arraylengthdcdip}; i++ ));
   do
     for (( j=0; j<${arraylengthportcmdcd}; j++ ));
     do
-        $nc ${portcmdcd[$j]:(-3)} ${dcdip[$i]} ${portcmdcd[$j]%,*}
+        $nc ${dcdip[$i]} ${portcmdcd[$j]%,*}
     done
+  done
+
+  echo -e "\n*** TEST BIG-IQ DCDs => current CM"
+  for (( i=0; i<${arraylengthdcdip}; i++ ));
+  do
+    cmd=""
+    for (( j=0; j<${arraylengthportdcdcm}; j++ ));
+    do
+      cmd="$nc $ipcm1 ${portdcdcm[$j]%,*} ; $cmd"
+    done
+    echo -e "BIG-IQ ${dcdip[$i]} root password"
+    ssh -o StrictHostKeyChecking=no -o CheckHostIP=no root@${dcdip[$i]} $cmd
+    echo
   done
 fi
 
 if [[ $ha = "yes"* ]]; then
-  echo -e "\n***HA\n\n*** TEST BIG-IQ CM => other CM"
+  echo -e "\n***HA\n\n*** TEST BIG-IQ current CM => secondary CM"
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
-      $nc ${portha[$j]:(-3)} $ipcm2 ${portha[$j]%,*}
+      $nc $ipcm2 ${portha[$j]%,*}
   done
 
-  echo -e "\n*** TEST BIG-IQ CM => other CM"
+  echo -e "\n*** TEST BIG-IQ current CM => secondary CM"
   cmd=""
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
-    cmd="$nc ${portha[$j]:(-3)} $ipcm1 ${portha[$j]%,*} ; $cmd"
+    cmd="$nc $ipcm1 ${portha[$j]%,*} ; $cmd"
   done
   echo -e "BIG-IQ $ipcm2 root password"
-  ssh -o StrictHostKeyChecking=no -oCheckHostIP=no root@$ipcm2 $cmd
+  ssh -o StrictHostKeyChecking=no -o CheckHostIP=no root@$ipcm2 $cmd
 
   if [ ! -z "$ipquorum" ]; then
-    echo -e "\n*** TEST BIG-IQ CM => other CM"
+    echo -e "\n*** TEST BIG-IQ current CM => secondary CM"
     do_pcs_check $ipcm2
-    echo -e "\n*** TEST BIG-IQ DCD Quorum => CM"
+    echo -e "\n*** TEST BIG-IQ DCD Quorum => current CM"
     do_pcs_check $ipquorum
 
-    echo -e "\n*** TEST BIG-IQ CM => other CM"
+    echo -e "\n*** TEST BIG-IQ current CM => secondary CM"
     do_corosync_check $ipcm2
-    echo -e "\n*** TEST BIG-IQ CM => DCD Quorum"
+    echo -e "\n*** TEST BIG-IQ current CM => DCD Quorum"
     do_corosync_check $ipquorum
   fi
 fi
