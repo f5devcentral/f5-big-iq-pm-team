@@ -1,6 +1,8 @@
 Installation instructions
 -------------------------
 
+Download the script on both Active/Standby BIG-IQ CM.
+
 ```
 # mkdir /shared/scripts
 # cd /shared/scripts
@@ -10,6 +12,8 @@ Installation instructions
 
 Usage
 -----
+
+The script needs to be executed on both Active/Standby BIG-IQ CM.
 
 ```
 # cd /shared/scripts

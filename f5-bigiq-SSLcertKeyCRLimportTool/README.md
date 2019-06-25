@@ -1,6 +1,8 @@
 Installation instructions
 -------------------------
 
+Download the script on both Active/Standby BIG-IQ CM.
+
 ```
 # mkdir /shared/scripts
 # cd /shared/scripts
