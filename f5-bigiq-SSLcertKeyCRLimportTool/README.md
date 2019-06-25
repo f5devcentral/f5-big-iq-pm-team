@@ -11,7 +11,7 @@ Installation instructions
 Usage
 -----
 
-[Look at the article on DevCentral](https://devcentral.f5.com/articles/automate-import-of-ssl-certificate-key-crl-from-big-ip-to-big-iq-31899)
+[Article on devCentral](https://devcentral.f5.com/articles/automate-import-of-ssl-certificate-key-crl-from-big-ip-to-big-iq-31899)
 
 ```
 # cd /shared/scripts

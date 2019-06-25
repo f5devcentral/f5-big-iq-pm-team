@@ -13,7 +13,7 @@ Usage
 
 /!\ **This feature is available in BIG-IQ 6.1** /!\
 
-[Look at the article on DevCentral](https://devcentral.f5.com/articles/generation-of-utility-billing-report-using-big-iqs-api-30193) 
+[Article on devCentral](https://devcentral.f5.com/articles/generation-of-utility-billing-report-using-big-iqs-api-30193) 
 
 ```
 # cd /shared/scripts
