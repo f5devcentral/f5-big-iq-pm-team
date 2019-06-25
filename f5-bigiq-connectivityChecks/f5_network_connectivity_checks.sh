@@ -217,7 +217,7 @@ if [[ $ha = "yes"* ]]; then
       $nc $ipcm2 ${portha[$j]%,*}
   done
 
-  echo -e "\n*** TEST BIG-IQ current CM => secondary CM"
+  echo -e "\n*** TEST BIG-IQ secondary CM => current CM"
   cmd=""
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
