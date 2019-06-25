@@ -48,8 +48,8 @@ arraylengthportdcdbigip=${#portdcdbigip[@]}
 portcmdcd[0]=443,tcp
 portcmdcd[1]=22,tcp
 portcmdcd[2]=9300,tcp #cluster
-#portcmdcd[3]=28015,tcp #api ---- should be removed
-#portcmdcd[4]=29015,tcp #cluster ---- should be removed
+portcmdcd[3]=28015,tcp #api
+portcmdcd[4]=29015,tcp #cluster
 arraylengthportcmdcd=${#portcmdcd[@]}
 
 # Requirements for BIG-IQ HA peers
@@ -62,6 +62,7 @@ portha[4]=28015,tcp #api
 portha[5]=29015,tcp #cluster
 arraylengthportha=${#portha[@]}
 
+# Used timeout /dev/tcp/1.2.3.4/443 for BIG-IP to DCD checks as BIG-IP 14.1 does not have nc.
 function connection_check() {
   timeout 1 bash -c "cat < /dev/null > /dev/$1/$2/$3" &>/dev/null
   if [  $? == 0 ]; then
@@ -70,6 +71,9 @@ function connection_check() {
     echo -e "Connection to $2 port $3 [$1] failed!"
   fi
 }
+
+# used for all checks running on BIG-IQ CM, DCD
+nc="nc -z -v -w5"
 
 # Active/Standby/Quorum DCD (BIG_IQ 7.0 and above)
 do_pcs_check() {
@@ -92,9 +96,9 @@ do_corosync_check() {
   nc -zvu -p 5404 -w 2 $1 5405 &>/dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Corosync check failed for $1 ports 5404, 5404 [udp]"
+    echo "Corosync check failed sends port 5404, receives $1 port 5405 [udp]"
   else
-    echo "Corosync check succeeded for $1 ports 5404, 5404 [udp]"
+    echo "Corosync check succeeded sends port 5404, receives $1 port 5405 [udp]"
   fi
 }
 
@@ -106,16 +110,18 @@ set -u
 
 echo -e "\nNote: you may use the BIG-IQ CM/DCD self IPs depending on your network architecture."
 
-echo -e "\nBIG-IQ CM Primary IP address:"
+echo -e "\nBIG-IQ CM current IP address (from where you execute this script):"
 read ipcm1
 
 echo -e "\nBIG-IQ HA? (yes/no)"
 read ha
 if [[ $ha = "yes"* ]]; then
-  echo -e "BIG-IQ CM Secondary IP address:"
+  echo -e "BIG-IQ CM pair IP address (either active or standby depending where you run the script):"
   read ipcm2
-  echo -e "BIG-IQ Quorum DCD IP address (only if Auto-failover HA):"
+  echo -e "BIG-IQ Quorum DCD IP address (only if auto-failover HA setup):"
   read ipquorum
+
+  echo -e "\nNote: please, run the script from the other BIG-IQ CM active or standby."
 fi
 
 echo
@@ -148,7 +154,7 @@ if [[ $arraylengthbigipip -gt 0 ]]; then
   do
     for (( j=0; j<${arraylengthportcmbigip}; j++ ));
     do
-        connection_check ${portcmbigip[$j]:(-3)} ${bigipip[$i]} ${portcmbigip[$j]%,*} 
+        $nc ${portcmbigip[$j]:(-3)} ${bigipip[$i]} ${portcmbigip[$j]%,*} 
     done
   done
 fi
@@ -177,36 +183,36 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
   do
     for (( j=0; j<${arraylengthportcmdcd}; j++ ));
     do
-        connection_check ${portcmdcd[$j]:(-3)} ${dcdip[$i]} ${portcmdcd[$j]%,*}
+        $nc ${portcmdcd[$j]:(-3)} ${dcdip[$i]} ${portcmdcd[$j]%,*}
     done
   done
 fi
 
 if [[ $ha = "yes"* ]]; then
-  echo -e "\n***HA\n\n*** TEST BIG-IQ CM Primary => CM Secondary"
+  echo -e "\n***HA\n\n*** TEST BIG-IQ CM => other CM"
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
-      connection_check ${portha[$j]:(-3)} $ipcm2 ${portha[$j]%,*}
+      $nc ${portha[$j]:(-3)} $ipcm2 ${portha[$j]%,*}
   done
 
-  echo -e "\n*** TEST BIG-IQ CM Secondary => CM Primary"
+  echo -e "\n*** TEST BIG-IQ CM => other CM"
   cmd=""
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
-    cmd="connection_check ${portha[$j]:(-3)} $ipcm1 ${portha[$j]%,*} ; $cmd"
+    cmd="$nc ${portha[$j]:(-3)} $ipcm1 ${portha[$j]%,*} ; $cmd"
   done
   echo -e "BIG-IQ $ipcm2 root password"
-  ssh -o StrictHostKeyChecking=no -oCheckHostIP=no root@$ipcm2 "$(typeset -f connection_check); $cmd"
+  ssh -o StrictHostKeyChecking=no -oCheckHostIP=no root@$ipcm2 $cmd
 
   if [ ! -z "$ipquorum" ]; then
-    echo -e "\n*** TEST BIG-IQ CM Secondary => CM Primary"
+    echo -e "\n*** TEST BIG-IQ CM => other CM"
     do_pcs_check $ipcm2
-    echo -e "\n*** TEST BIG-IQ DCD Quorum => CM Primary"
+    echo -e "\n*** TEST BIG-IQ DCD Quorum => CM"
     do_pcs_check $ipquorum
 
-    echo -e "\n*** TEST BIG-IQ CM Primary => CM Seconday"
+    echo -e "\n*** TEST BIG-IQ CM => other CM"
     do_corosync_check $ipcm2
-    echo -e "\n*** TEST BIG-IQ CM Primary => DCD Quorum"
+    echo -e "\n*** TEST BIG-IQ CM => DCD Quorum"
     do_corosync_check $ipquorum
   fi
 fi
