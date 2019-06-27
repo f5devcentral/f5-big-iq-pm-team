@@ -20,6 +20,7 @@
 
 # 06/24/2019: v1.0  r.jouhannet@f5.com    Initial version
 # 06/25/2019: v1.1  r.jouhannet@f5.com    Add option for user and ssh key for BIG-IP and BIG-IQ
+# 06/27/2019: v1.2  r.jouhannet@f5.com    Remove 2224 as not needed
 
 # Usage:
 #./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
@@ -105,20 +106,6 @@ function connection_check() {
 nc="nc -z -v -w5"
 
 # Active/Standby/Quorum DCD (BIG_IQ 7.0 and above)
-do_pcs_check() {
-  # Pacemaker uses tcp port 2224 for communication
-  echo -e "BIG-IQ $1 $bigiqsshuser password"
-  ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no -f $bigiqsshuser@$1 'nohup sh -c "( ( nc -vl 2224 &>/dev/null) & )"'
-  # to make sure ssh has returned.
-  sleep 1
-  nc -zv -w 2 $1 2224 &>/dev/null
-
-  if [[ $? -ne 0 ]]; then
-    echo "Pacemaker check failed for $1 port 2224 [tcp]"
-  else
-    echo "Pacemaker check succeeded for $1 port 2224 [tcp]"
-  fi
-}
 
 do_corosync_check() {
   # Corosync sends the data using udp port 5404 and receives the data using udp port 5405
@@ -251,11 +238,6 @@ if [[ $ha = "yes"* ]]; then
 
   if [ ! -z "$ipquorum" ]; then
     echo -e "\nNote: Only for BIG-IQ 7.0 and above and if auto-failover HA is setup."
-    echo -e "\n*** TEST BIG-IQ current CM => secondary CM"
-    do_pcs_check $ipcm2
-    echo -e "\n*** TEST BIG-IQ DCD Quorum => current CM"
-    do_pcs_check $ipquorum
-
     echo -e "\n*** TEST BIG-IQ current CM => secondary CM"
     do_corosync_check $ipcm2
     echo -e "\n*** TEST BIG-IQ current CM => DCD Quorum"
