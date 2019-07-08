@@ -20,6 +20,7 @@
 
 # 06/24/2019: v1.0  r.jouhannet@f5.com    Initial version
 # 06/25/2019: v1.1  r.jouhannet@f5.com    Add option for user and ssh key for BIG-IP and BIG-IQ
+# 07/08/2019: v1.2  r.jouhannet@f5.com    8015 and 29015 ports aren't used in BIG-IQ 7.0 and above
 
 # Usage:
 #./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
@@ -77,8 +78,8 @@ arraylengthportcmdcd=${#portcmdcd[@]}
 
 # BIG-IQ DCDs => CM
 portdcdcm[0]=9300,tcp #cluster
-portdcdcm[1]=28015,tcp #api
-portdcdcm[2]=29015,tcp #cluster
+portdcdcm[1]=28015,tcp #api RethinkDB not for 7.0 and above
+portdcdcm[2]=29015,tcp #cluster RethinkDB not for 7.0 and above
 arraylengthportdcdcm=${#portdcdcm[@]}
 
 # Requirements for BIG-IQ HA peers
@@ -87,8 +88,8 @@ portha[0]=443,tcp
 portha[1]=22,tcp
 portha[2]=9300,tcp #cluster
 portha[3]=27017,tcp #sync db
-portha[4]=28015,tcp #api
-portha[5]=29015,tcp #cluster
+portha[4]=28015,tcp #api RethinkDB not for 7.0 and above
+portha[5]=29015,tcp #cluster RethinkDB not for 7.0 and above
 arraylengthportha=${#portha[@]}
 
 # Used timeout /dev/tcp/1.2.3.4/443 for BIG-IP to DCD checks as BIG-IP 14.1 does not have nc.
@@ -231,6 +232,8 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
     ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@${dcdip[$i]} $cmd
     echo
   done
+
+  echo -e "\nNote: 28015 and 29015 ports aren't used in BIG-IQ 7.0 and above."
 fi
 
 if [[ $ha = "yes"* ]]; then
@@ -248,6 +251,8 @@ if [[ $ha = "yes"* ]]; then
   done
   echo -e "BIG-IQ $ipcm2 $bigiqsshuser password"
   ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$ipcm2 $cmd
+
+  echo -e "\nNote: 28015 and 29015 ports aren't used in BIG-IQ 7.0 and above."
 
   if [ ! -z "$ipquorum" ]; then
     echo -e "\nNote: Only for BIG-IQ 7.0 and above and if auto-failover HA is setup."
