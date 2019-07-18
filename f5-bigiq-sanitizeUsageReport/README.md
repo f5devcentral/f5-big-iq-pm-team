@@ -4,6 +4,7 @@ Installation instructions
 Download the script on both Active/Standby BIG-IQ CM.
 
 ```
+# bash
 # mkdir /shared/scripts
 # cd /shared/scripts
 # curl https://raw.githubusercontent.com/f5devcentral/f5-big-iq-pm-team/master/f5-bigiq-sanitizeUsageReport/f5_sanitize_usage_report.sh > f5_sanitize_usage_report.sh
