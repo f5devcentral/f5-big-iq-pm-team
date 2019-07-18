@@ -4,6 +4,7 @@ Installation instructions
 Download the script on both Active/Standby BIG-IQ CM.
 
 ```
+# bash
 # mkdir /shared/scripts
 # cd /shared/scripts
 # curl https://raw.githubusercontent.com/f5devcentral/f5-big-iq-pm-team/master/f5-bigiq-SSLcertKeyCRLimportTool/import-bigip-cert-key-crl.py > import-bigip-cert-key-crl.py
