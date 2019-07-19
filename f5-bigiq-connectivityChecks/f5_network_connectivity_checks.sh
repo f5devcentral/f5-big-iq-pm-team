@@ -179,7 +179,7 @@ arraylengthbigipip=${#bigipip[@]}
 #################################################################################
 
 if [[ $arraylengthbigipip -gt 0 ]]; then
-  echo -e "\n\n*** TEST BIG-IQ current CM => BIG-IPs"
+  echo -e "\n\n*** TEST BIG-IQ current CM => BIG-IP(s)"
   for (( i=0; i<${arraylengthbigipip}; i++ ));
   do
     for (( j=0; j<${arraylengthportcmbigip}; j++ ));
@@ -191,7 +191,7 @@ if [[ $arraylengthbigipip -gt 0 ]]; then
 fi
 
 if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
-  echo -e "\n*** TEST BIG-IPs => BIG-IQ DCDs"
+  echo -e "\n*** TEST BIG-IP(s) => BIG-IQ DCD(s)"
   for (( i=0; i<${arraylengthbigipip}; i++ ));
   do
     for (( j=0; j<${arraylengthdcdip}; j++ ));
@@ -211,7 +211,7 @@ if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
 fi
 
 if [[ $arraylengthdcdip -gt 0 ]]; then
-  echo -e "\n*** TEST BIG-IQ current CM => DCDs"
+  echo -e "\n*** TEST BIG-IQ current CM => DCD(s)"
   for (( i=0; i<${arraylengthdcdip}; i++ ));
   do
     for (( j=0; j<${arraylengthportcmdcd}; j++ ));
@@ -220,7 +220,7 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
     done
   done
 
-  echo -e "\n*** TEST BIG-IQ DCDs => current CM"
+  echo -e "\n*** TEST BIG-IQ DCD(s) => current CM"
   for (( i=0; i<${arraylengthdcdip}; i++ ));
   do
     cmd=""

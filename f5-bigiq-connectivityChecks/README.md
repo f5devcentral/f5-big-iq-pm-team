@@ -14,7 +14,7 @@ Download the script on both Active/Standby BIG-IQ CM.
 Usage
 -----
 
-The script needs to be executed on both Active/Standby BIG-IQ CM.
+The script needs to be executed on *both Active/Standby BIG-IQ CM*.
 
 ```
 # cd /shared/scripts
@@ -22,3 +22,5 @@ The script needs to be executed on both Active/Standby BIG-IQ CM.
 ```
 
 BIG-IP/BIG-IQ ssh users and private keys are optionals. **root** user is used by default if nothing is specified and the passwords will be asked.
+
+In order to have the tool working correctly and perform all the necessary checks, you will need to have port 22 open from the BIG-IQ CM servers toward BIG-IQ DCD(s) and BIG-IP(s).
