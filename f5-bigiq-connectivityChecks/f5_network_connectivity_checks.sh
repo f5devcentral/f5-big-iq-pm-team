@@ -21,6 +21,7 @@
 # 06/24/2019: v1.0  r.jouhannet@f5.com    Initial version
 # 06/25/2019: v1.1  r.jouhannet@f5.com    Add option for user and ssh key for BIG-IP and BIG-IQ
 # 07/08/2019: v1.2  r.jouhannet@f5.com    8015 and 29015 ports aren't used in BIG-IQ 7.0 and above
+# 07/20/2019: v1.3  r.jouhannet@f5.com    Add note dcd to big-ip before 13.1.0.5 curl -k -u admin:password https://<bigipaddress>/mgmt/shared/echo
 
 # Usage:
 #./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
@@ -55,7 +56,7 @@ fi
 
 # Requirements for BIG-IQ management and Requirements for BIG-IP device discovery, management, and monitoring
 # BIG-IQ CM => BIG-IPs
-portcmbigip[0]=443,tcp
+portcmbigip[0]=443,tcp 
 portcmbigip[1]=22,tcp # Only required for BIG-IP versions 11.5.0 to 11.6.0
 arraylengthportcmbigip=${#portcmbigip[@]}
 
@@ -68,6 +69,8 @@ portdcdbigip[3]=8018,tcp #AFM
 portdcdbigip[4]=8514,tcp #ASM
 portdcdbigip[5]=9997,tcp #access/IPsec
 arraylengthportdcdbigip=${#portdcdbigip[@]}
+# BIG-IQ DCDs => BIG-IPs
+# curl -k -u admin:password https://<bigipaddress>/mgmt/shared/echo
 
 # Requirements for BIG-IQ management and Data Collection Devices (DCD)
 # BIG-IQ CM => DCDs
@@ -131,7 +134,6 @@ do_corosync_check() {
     echo "Corosync check succeeded sends port 5404, receives $1 port 5405 [udp]"
   fi
 }
-
 
 #################################################################################
 
@@ -207,7 +209,11 @@ if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
     echo
   done
 
-  echo -e "\nNote: FPS uses port 8008, DoS uses port 8020, AFM uses port 8018, ASM uses port 8514 and Access/IPsec uses port 9997.\nIf you are not using those modules, ignore the failure."
+  echo -e "\nNote 1: FPS uses port 8008, DoS uses port 8020, AFM uses port 8018, ASM uses port 8514 and Access/IPsec uses port 9997.\nIf you are not using those modules, ignore the failure."
+
+  echo -e "\nNote 2: If BIG-IP version < 13.1.0.5, run from BIG-IQ DCD: curl -k -u admin:password https://<bigipaddress>/mgmt/shared/echo"
+
+
 fi
 
 if [[ $arraylengthdcdip -gt 0 ]]; then
