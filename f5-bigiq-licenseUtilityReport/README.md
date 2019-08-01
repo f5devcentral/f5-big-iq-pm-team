@@ -16,7 +16,9 @@ Usage
 
 /!\ **This feature is available in BIG-IQ 6.1** /!\
 
-[Article on devCentral](https://devcentral.f5.com/articles/generation-of-utility-billing-report-using-big-iqs-api-30193) 
+[Article on devCentral for BIG-IQ 5.4/6.0](https://devcentral.f5.com/articles/generation-of-utility-billing-report-using-big-iqs-api-30193)
+
+[BIG-IQ 6.1 documentation](https://techdocs.f5.com/kb/en-us/products/big-iq-centralized-mgmt/manuals/product/big-iq-managing-big-ip-ve-subscriptions-6-1-0/02.html)
 
 ```
 # cd /shared/scripts
