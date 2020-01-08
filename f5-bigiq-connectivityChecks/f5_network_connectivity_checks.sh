@@ -22,13 +22,15 @@
 # 06/25/2019: v1.1  r.jouhannet@f5.com    Add option for user and ssh key for BIG-IP and BIG-IQ
 # 07/08/2019: v1.2  r.jouhannet@f5.com    8015 and 29015 ports aren't used in BIG-IQ 7.0 and above
 # 07/20/2019: v1.3  r.jouhannet@f5.com    Add note dcd to big-ip before 13.1.0.5 curl -k -u admin:password https://<bigipaddress>/mgmt/shared/echo
+# 01/08/2019: v1.4  r.jouhannet@f5.com    Toku port 27017 removed for 7.1 and above, replaced with 5432 for HA replication
+
 
 # Usage:
 #./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
 
 # K15612: Connectivity requirements for the BIG-IQ system
 # https://support.f5.com/csp/article/K15612
-# https://support.f5.com/csp/knowledge-center/software/BIG-IQ?module=BIG-IQ%20Centralized%20Management&version=6.1.0
+# https://support.f5.com/csp/knowledge-center/software/BIG-IQ?module=BIG-IQ%20Centralized%20Management&version=7.0.0
 #  => Planning and Implementing a BIG-IQ Centralized Management Deployment
 #    => Open ports required for BIG-IQ system deployment
 
@@ -81,8 +83,8 @@ arraylengthportcmdcd=${#portcmdcd[@]}
 
 # BIG-IQ DCDs => CM
 portdcdcm[0]=9300,tcp #cluster
-portdcdcm[1]=28015,tcp #api RethinkDB not for 7.0 and above
-portdcdcm[2]=29015,tcp #cluster RethinkDB not for 7.0 and above
+portdcdcm[1]=28015,tcp #api RethinkDB for <= 6.1
+portdcdcm[2]=29015,tcp #cluster RethinkDB <= 6.1
 arraylengthportdcdcm=${#portdcdcm[@]}
 
 # Requirements for BIG-IQ HA peers
@@ -90,12 +92,13 @@ arraylengthportdcdcm=${#portdcdcm[@]}
 portha[0]=443,tcp
 portha[1]=22,tcp
 portha[2]=9300,tcp #cluster
-portha[3]=27017,tcp #sync db
-portha[4]=28015,tcp #api RethinkDB not for 7.0 and above
-portha[5]=29015,tcp #cluster RethinkDB not for 7.0 and above
+portha[3]=27017,tcp #sync db toku <= 7.0
+portha[4]=28015,tcp #api RethinkDB HA replication <= 6.1
+portha[5]=29015,tcp #cluster RethinkDB <= 6.1
+portha[6]=5432,tcp #sync db Postgres HA replication >= 7.1
 arraylengthportha=${#portha[@]}
 
-# Used timeout /dev/tcp/1.2.3.4/443 for BIG-IP to DCD checks as BIG-IP 14.1 does not have nc.
+# Used timeout /dev/tcp/1.2.3.4/443 for BIG-IP to DCD checks as BIG-IP 14.1 does NOT have nc.
 function connection_check() {
   timeout 1 bash -c "cat < /dev/null > /dev/$1/$2/$3" &>/dev/null
   if [  $? == 0 ]; then
@@ -239,7 +242,7 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
     echo
   done
 
-  echo -e "\nNote: 28015 and 29015 ports aren't used in BIG-IQ 7.0 and above."
+  echo -e "\nNote: 28015 and 29015 ports used only <= 6.1"
 fi
 
 if [[ $ha = "yes"* ]]; then
@@ -258,10 +261,12 @@ if [[ $ha = "yes"* ]]; then
   echo -e "BIG-IQ $ipcm2 $bigiqsshuser password"
   ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$ipcm2 $cmd
 
-  echo -e "\nNote: 28015 and 29015 ports aren't used in BIG-IQ 7.0 and above."
+  echo -e "\nNote 1: 28015 and 29015 ports used only <= 6.1"
+
+  echo -e "\nNote 2: 27017 port used only <= 7.0. 5432 port used only >= 7.1"
 
   if [ ! -z "$ipquorum" ]; then
-    echo -e "\nNote: Only for BIG-IQ 7.0 and above and if auto-failover HA is setup."
+    echo -e "\nNote: Only for <= 7.0 and if auto-failover HA is setup."
     echo -e "\n*** TEST BIG-IQ current CM => secondary CM"
     do_pcs_check $ipcm2
     echo -e "\n*** TEST BIG-IQ DCD Quorum => current CM"
