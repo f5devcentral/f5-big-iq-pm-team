@@ -16,7 +16,7 @@ Usage
 
 Consult https://support.f5.com/csp/article/K54909607 before using the tool.
 
-New AS3 RPM needs to be in uploaded in /home/admin.
+The new AS3 RPM needs to be uploaded in /home/admin.
 
 ```
 # cd /shared/scripts

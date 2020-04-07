@@ -25,7 +25,7 @@ home="/home/admin"
 if [[ -z $1 ]]; then
     echo -e "\nRead https://support.f5.com/csp/article/K54909607\n"
     echo -e "Usage: $0 <newRPM> <currentRPM>\n"
-    echo -e "Note: new AS3 RPM needs to be in uploaded in /home/admin.\n"
+    echo -e "Note: new AS3 RPM needs to be uploaded in /home/admin.\n"
     echo -e "Example: $0 f5-appsvcs-3.18.0-4.noarch.rpm f5-appsvcs-3.13.2-1.noarch.rpm\n"
     echo "AS3 version currently installed:"
     curl -s http://localhost:8105/shared/appsvcs/info | jq .
