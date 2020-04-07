@@ -2,6 +2,8 @@
 
 This GitHub Repository is managed by the F5 BIG-IQ Product Management Team.
 
+Bugs and Requests for enhancements can be made by opening an Issue within the repository.
+
 Tools | Description
 ------------ | -------------
 [f5-bigiq-as3-rpm-update](./f5-bigiq-as3-rpm-update) | This script will help you to update AS3 on BIG-IQ. Check [K54909607](https://support.f5.com/csp/article/K54909607) for more details.
