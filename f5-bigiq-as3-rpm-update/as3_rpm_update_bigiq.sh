@@ -19,6 +19,7 @@
 #################################################################################
 
 # 04/07/2020: v1.0  r.jouhannet@f5.com    Initial version
+# 04/08/2020: v1.1  r.jouhannet@f5.com    Add $home/ in the if rpm -Uv --force 
 
 home="/home/admin"
 
@@ -47,13 +48,13 @@ currentRPM="$2" #optional for initial install
 
 
 if [ -f $home/$newRPM ]; then
-    echo "Installing latest RPM: ${newRPM}"
-    latestVersion=$(curl http://localhost:8105/shared/appsvcs/info)
-    echo 'AS3 Info: '
+    echo -e "\nInstalling latest RPM: ${newRPM}"
+    latestVersion=$(curl -s http://localhost:8105/shared/appsvcs/info)
+    echo -e "\nAS3 Info: "
     echo "$latestVersion"
-    if rpm -Uv --force "$newRPM" ; then
+    if rpm -Uv --force "$home/$newRPM" ; then
         mount -o remount,rw /usr
-        echo 'Updating restjavad props to point to new RPM'
+        echo "Updating restjavad props to point to new RPM"
         if [ -z "$currentRPM" ]; then
             currentRPM=$newRPM
         fi
@@ -74,9 +75,9 @@ if [ -f $home/$newRPM ]; then
         bigstart restart restnoded &
         restartProc=$!
         wait $restartProc
-        echo 'Finished restarting services'
+        echo "Finished restarting services"
     else
-        'Failed to install latest RPM';
+        "Failed to install latest RPM";
         exit 1;
     fi
 fi
