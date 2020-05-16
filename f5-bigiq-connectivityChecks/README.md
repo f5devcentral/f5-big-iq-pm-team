@@ -1,6 +1,8 @@
 Installation instructions
 -------------------------
 
+[K15612: Connectivity requirements for the BIG-IQ system](https://support.f5.com/csp/article/K15612)
+
 Download the script on both Active/Standby BIG-IQ CM(s).
 
 ```
