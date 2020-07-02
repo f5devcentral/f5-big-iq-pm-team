@@ -24,13 +24,14 @@
 # 07/20/2019: v1.3  r.jouhannet@f5.com    Add note dcd to big-ip before 13.1.0.5 curl -k -u admin:password https://<bigipaddress>/mgmt/shared/echo
 # 01/08/2019: v1.4  r.jouhannet@f5.com    Toku port 27017 removed for 7.1 and above, replaced with 5432 for HA replication
 # 15/04/2020: v1.5  r.jouhannet@f5.com    Add DCD(s) to DCD(s) checks. Minor output reformating
+# 02/07/2020: v1.6  r.jouhannet@f5.com    Remove DCD to DCD ports 28015 and 29015 as it's for 6.1.
 
 # Usage:
 #./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
 
 # K15612: Connectivity requirements for the BIG-IQ system
 # https://support.f5.com/csp/article/K15612
-# https://support.f5.com/csp/knowledge-center/software/BIG-IQ?module=BIG-IQ%20Centralized%20Management&version=7.0.0
+# https://support.f5.com/csp/knowledge-center/software/BIG-IQ?module=BIG-IQ%20Centralized%20Management&version=7.1.0
 #  => Planning and Implementing a BIG-IQ Centralized Management Deployment
 #    => Open ports required for BIG-IQ system deployment
 
@@ -83,8 +84,8 @@ arraylengthportcmdcd=${#portcmdcd[@]}
 
 # BIG-IQ DCDs => CM
 portdcdcm[0]=9300,tcp #cluster
-portdcdcm[1]=28015,tcp #api RethinkDB for <= 6.1
-portdcdcm[2]=29015,tcp #cluster RethinkDB <= 6.1
+#portdcdcm[1]=28015,tcp #api RethinkDB for <= 6.1
+#portdcdcm[2]=29015,tcp #cluster RethinkDB <= 6.1
 arraylengthportdcdcm=${#portdcdcm[@]}
 
 # BIG-IQ DCD <=> DCD
@@ -97,9 +98,9 @@ portha[0]=443,tcp
 portha[1]=22,tcp
 portha[2]=9300,tcp #cluster
 portha[3]=27017,tcp #sync db toku <= 7.0
-portha[4]=28015,tcp #api RethinkDB HA replication <= 6.1
-portha[5]=29015,tcp #cluster RethinkDB <= 6.1
-portha[6]=5432,tcp #sync db Postgres HA replication >= 7.1
+portha[4]=5432,tcp #sync db Postgres HA replication >= 7.1
+#portha[5]=28015,tcp #api RethinkDB HA replication <= 6.1
+#portha[6]=29015,tcp #cluster RethinkDB <= 6.1
 arraylengthportha=${#portha[@]}
 
 # Used timeout /dev/tcp/1.2.3.4/443 for BIG-IP to DCD checks as BIG-IP 14.1 does NOT have nc.
@@ -253,7 +254,7 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
     echo
   done
 
-  echo -e "Note: 28015 and 29015 ports used only <= 6.1"
+  #echo -e "Note: 28015 and 29015 ports used only <= 6.1"
 
   if [[ $arraylengthdcdip -gt 1 ]]; then
     echo -e "\n*** TEST BIG-IQ DCD(s) => DCD(s)"
@@ -304,9 +305,9 @@ if [[ $ha = "yes"* ]]; then
   echo -e "BIG-IQ CM $ipcm2 $bigiqsshuser password"
   ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$ipcm2 $cmd
 
-  echo -e "\nNote 1: 28015 and 29015 ports used only <= 6.1"
+  #echo -e "\nNote: 28015 and 29015 ports used only <= 6.1"
 
-  echo -e "\nNote 2: 27017 port used only <= 7.0. 5432 port used only >= 7.1"
+  echo -e "\nNote: 27017 port used only <= 7.0. 5432 port used only >= 7.1"
 
   if [ ! -z "$ipquorum" ]; then
     echo -e "\nNote: Only for <= 7.0 and if auto-failover HA is setup."
@@ -325,5 +326,7 @@ if [[ $ha = "yes"* ]]; then
     do_corosync_check $ipquorum
   fi
 fi
+
+echo -e "\nPlease, also visit https://support.f5.com/csp/article/K15612"
 
 echo -e "\nEnd."
