@@ -6,6 +6,7 @@ Bugs and Requests for enhancements can be made by opening an Issue within the re
 
 Tools | Description
 ------------ | -------------
+[f5-bigiq-TMUI-RCE-vulnerability-CVE-2020-5902](./f5-bigiq-TMUI-RCE-vulnerability-CVE-2020-5902) | This script will help you to mitigate CVE-2020-5902 using Script Management feature on BIG-IQ. Check [K54909607](https://support.f5.com/csp/article//K52145254) for more details.
 [f5-bigiq-as3-rpm-update](./f5-bigiq-as3-rpm-update) | This script will help you to update AS3 on BIG-IQ. Check [K54909607](https://support.f5.com/csp/article/K54909607) for more details.
 [f5-bigiq-do-rpm-update](./f5-bigiq-do-rpm-update) | This script will help you to update DO on BIG-IQ. Check [K54909607](https://support.f5.com/csp/article/K54909607) for more details.
 [f5-bigiq-connectivityChecks](./f5-bigiq-connectivityChecks) | This script will run a sequence checks to verify connectivity between BIG-IQ CM, DCD and BIG-IPs.
