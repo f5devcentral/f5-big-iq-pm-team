@@ -1,9 +1,7 @@
 Installation instructions
 -------------------------
 
-[K15612: Connectivity requirements for the BIG-IQ system](https://support.f5.com/csp/article/K15612)
-
-Download the script on both Active/Standby BIG-IQ CM(s).
+Download the script on both Active BIG-IQ CM.
 
 ```
 # bash
@@ -23,4 +21,4 @@ The script needs to be executed on *Active BIG-IQ CM*.
 #./f5_dcd_health_checks.sh [<BIG-IQ DCD sshuser>]
 ```
 
-BIG-IQ DCD ssh users is optional. **root** user is used by default if nothing is specified and the passwords will be asked.
+BIG-IQ DCD ssh user is optional. **root** user is used by default if nothing is specified and the passwords will be asked.
