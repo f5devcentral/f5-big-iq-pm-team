@@ -25,6 +25,8 @@
 # 01/08/2019: v1.4  r.jouhannet@f5.com    Toku port 27017 removed for 7.1 and above, replaced with 5432 for HA replication
 # 15/04/2020: v1.5  r.jouhannet@f5.com    Add DCD(s) to DCD(s) checks. Minor output reformating
 # 02/07/2020: v1.6  r.jouhannet@f5.com    Remove DCD to DCD ports 28015 and 29015 as it's for 6.1.
+# 08/28/2020: v1.7  r.jouhannet@f5.com    Split Management IP and Discovery IP for CM
+#                                         Split Discovery/Listener and Data Collection IP for DCD
 
 # Usage:
 #./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
@@ -150,18 +152,21 @@ set -u
 
 echo -e "\nNote: you may use the BIG-IQ CM/DCD self IPs depending on your network architecture and DCD discovery IP.\nIf you get 'Connection refused', check if the self-ip is used instead of the management interface for discovery IP on the DCDs."
 
-echo -e "\nBIG-IQ CM current IP address(s) configured:"
+echo -e "\nBIG-IQ CM primary IP address(s) list:"
 ip addr show | grep -w inet | grep -v tmm | grep global
 
-echo -e "\nBIG-IQ CM current IP address (from where you execute this script)?"
-read ipcm1
+echo -e "\nBIG-IQ CM primary Management IP address (eth0)?"
+read ipcm1m
+
+echo -e "\nBIG-IQ CM primary Discovery IP address (eth1 or eth2)? (it can be the same as the Management IP)"
+read ipcm1d
 
 echo -e "\nBIG-IQ HA? (yes/no)"
 read ha
 if [[ $ha = "yes"* ]]; then
-  echo -e "BIG-IQ CM secondary IP address (either active or standby depending where you run the script):"
-  read ipcm2
-  echo -e "BIG-IQ Quorum DCD IP address (only if auto-failover HA is setup)?"
+  echo -e "BIG-IQ CM secondary Management IP address (either active or standby depending where you run the script):"
+  read ipcm2m
+  echo -e "BIG-IQ Quorum DCD Management IP address (only if auto-failover HA is setup)?"
   read ipquorum
 
   echo -e "\nNote: please, run the script from the secondary BIG-IQ CM active or standby."
@@ -169,14 +174,24 @@ fi
 
 echo
 
-dcdip=()
-while IFS= read -r -p "BIG-IQ DCD IP address(es) (end with an empty line)? " line; do
+# Discovery/Listener Address (eth0 or eth1 or eth2)
+dcdip1=()
+while IFS= read -r -p "BIG-IQ DCD Discovery/Listener Address IP address(es) (end with an empty line)? " line; do
     [[ $line ]] || break  # break if line is empty
-    dcdip+=("$line")
+    dcdip1+=("$line")
 done
 
-#printf '  «%s»\n' "${dcdip[@]}"
-arraylengthdcdip=${#dcdip[@]}
+echo
+
+# Data Collection IP Address (eth0 or eth1 or eth2)
+dcdip2=()
+while IFS= read -r -p "BIG-IQ DCD Data Collection IP address(es) (end with an empty line)? " line; do
+    [[ $line ]] || break  # break if line is empty
+    dcdip2+=("$line")
+done
+
+#printf '  «%s»\n' "${dcdip1[@]}"
+arraylengthdcdip=${#dcdip1[@]}
 
 echo
 
@@ -192,7 +207,7 @@ arraylengthbigipip=${#bigipip[@]}
 #################################################################################
 
 if [[ $arraylengthbigipip -gt 0 ]]; then
-  echo -e "\n\n*** TEST BIG-IQ current CM => BIG-IP(s)"
+  echo -e "\n\n*** TEST BIG-IQ primary CM => BIG-IP(s)"
   echo -e "*****************************************"
   for (( i=0; i<${arraylengthbigipip}; i++ ));
   do
@@ -214,7 +229,7 @@ if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
       cmd=""
       for (( k=0; k<${arraylengthportdcdbigip}; k++ ));
       do
-        cmd="connection_check ${portdcdbigip[$k]:(-3)} ${dcdip[$j]} ${portdcdbigip[$k]%,*} ; $cmd"
+        cmd="connection_check ${portdcdbigip[$k]:(-3)} ${dcdip1[$j]} ${portdcdbigip[$k]%,*} ; $cmd"
       done
     done
     echo -e "BIG-IP ${bigipip[$i]} $bigipsshuser password"
@@ -230,27 +245,27 @@ if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
 fi
 
 if [[ $arraylengthdcdip -gt 0 ]]; then
-  echo -e "\n*** TEST BIG-IQ current CM => DCD(s)"
+  echo -e "\n*** TEST BIG-IQ primary CM => DCD(s)"
   echo -e "************************************"
   for (( i=0; i<${arraylengthdcdip}; i++ ));
   do
     for (( j=0; j<${arraylengthportcmdcd}; j++ ));
     do
-        $nc ${dcdip[$i]} ${portcmdcd[$j]%,*}
+        $nc ${dcdip2[$i]} ${portcmdcd[$j]%,*}
     done
   done
 
-  echo -e "\n*** TEST BIG-IQ DCD(s) => current CM"
+  echo -e "\n*** TEST BIG-IQ DCD(s) => primary CM"
   echo -e "************************************"
   for (( i=0; i<${arraylengthdcdip}; i++ ));
   do
     cmd=""
     for (( j=0; j<${arraylengthportdcdcm}; j++ ));
     do
-      cmd="$nc $ipcm1 ${portdcdcm[$j]%,*} ; $cmd"
+      cmd="$nc $ipcm1d ${portdcdcm[$j]%,*} ; $cmd"
     done
-    echo -e "BIG-IQ DCD ${dcdip[$i]} $bigiqsshuser password"
-    ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@${dcdip[$i]} $cmd
+    echo -e "BIG-IQ DCD ${dcdip2[$i]} $bigiqsshuser password"
+    ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@${dcdip2[$i]} $cmd
     echo
   done
 
@@ -259,7 +274,7 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
   if [[ $arraylengthdcdip -gt 1 ]]; then
     echo -e "\n*** TEST BIG-IQ DCD(s) => DCD(s)"
     echo -e "********************************"
-    set -- ${dcdip[@]}
+    set -- ${dcdip2[@]}
     for a; do
         shift
         for b; do
@@ -288,22 +303,22 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
 fi
 
 if [[ $ha = "yes"* ]]; then
-  echo -e "\n***HA\n\n*** TEST BIG-IQ current CM => secondary CM"
+  echo -e "\n***HA\n\n*** TEST BIG-IQ primary CM => secondary CM"
   echo -e "****************************************************"
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
-      $nc $ipcm2 ${portha[$j]%,*}
+      $nc $ipcm2m ${portha[$j]%,*}
   done
 
-  echo -e "\n*** TEST BIG-IQ secondary CM => current CM"
+  echo -e "\n*** TEST BIG-IQ secondary CM => primary CM"
   echo -e "******************************************"
   cmd=""
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
-    cmd="$nc $ipcm1 ${portha[$j]%,*} ; $cmd"
+    cmd="$nc $ipcm1m ${portha[$j]%,*} ; $cmd"
   done
-  echo -e "BIG-IQ CM $ipcm2 $bigiqsshuser password"
-  ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$ipcm2 $cmd
+  echo -e "BIG-IQ CM $ipcm2m $bigiqsshuser password"
+  ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$ipcm2m $cmd
 
   #echo -e "\nNote: 28015 and 29015 ports used only <= 6.1"
 
@@ -311,17 +326,17 @@ if [[ $ha = "yes"* ]]; then
 
   if [ ! -z "$ipquorum" ]; then
     echo -e "\nNote: Only for <= 7.0 and if auto-failover HA is setup."
-    echo -e "\n*** TEST BIG-IQ current CM => secondary CM"
+    echo -e "\n*** TEST BIG-IQ primary CM => secondary CM"
     echo -e "******************************************"
-    do_pcs_check $ipcm2
-    echo -e "\n*** TEST BIG-IQ DCD Quorum => current CM"
+    do_pcs_check $ipcm2m
+    echo -e "\n*** TEST BIG-IQ DCD Quorum => primary CM"
     echo -e "******************************************"
     do_pcs_check $ipquorum
 
-    echo -e "\n*** TEST BIG-IQ current CM => secondary CM"
+    echo -e "\n*** TEST BIG-IQ primary CM => secondary CM"
     echo -e "******************************************"
-    do_corosync_check $ipcm2
-    echo -e "\n*** TEST BIG-IQ current CM => DCD Quorum"
+    do_corosync_check $ipcm2m
+    echo -e "\n*** TEST BIG-IQ primary CM => DCD Quorum"
     echo -e "******************************************"
     do_corosync_check $ipquorum
   fi
