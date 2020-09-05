@@ -27,6 +27,7 @@
 # 02/07/2020: v1.6  r.jouhannet@f5.com    Remove DCD to DCD ports 28015 and 29015 as it's for 6.1.
 # 08/28/2020: v1.7  r.jouhannet@f5.com    Split Management IP and Discovery IP for CM
 #                                         Split Discovery/Listener and Data Collection IP for DCD
+# 09/04/2020: v1.8  r.jouhannet@f5.com    Automatically get eth0 BIG-IQ CM. Update note for HA, improve user inputs.
 
 # Usage:
 #./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
@@ -156,27 +157,36 @@ echo -e "\nBIG-IQ CM primary IP address(s) list:"
 ip addr show | grep -w inet | grep -v tmm | grep global
 
 echo -e "\nBIG-IQ CM primary Management IP address (eth0)?"
-read ipcm1m
+#read ipcm1m
+ipcm1m=$(ip addr show | grep -w inet | grep -v tmm | grep global | grep -E 'eth0|mgmt' | awk '{print $2}' | head -c -4)
+echo $ipcm1m
 
-echo -e "\nBIG-IQ CM primary Discovery IP address (eth1 or eth2)? (it can be the same as the Management IP)"
+echo -e "\nBIG-IQ CM primary Discovery IP address (eth1 or eth2)? (leave empty and hit enter if not Discovery IP address)"
 read ipcm1d
 
-echo -e "\nBIG-IQ HA? (yes/no)"
+if [[ -z $ipcm1d ]]; then
+  ipcm1d=$ipcm1m
+  echo -e "Discovery IP address is Management IP address ($ipcm1d)"
+fi
+
+echo -e "\nBIG-IQ HA? (yes, default no)"
 read ha
 if [[ $ha = "yes"* ]]; then
   echo -e "BIG-IQ CM secondary Management IP address (either active or standby depending where you run the script):"
   read ipcm2m
-  echo -e "BIG-IQ Quorum DCD Management IP address (only if auto-failover HA is setup)?"
+  echo -e "BIG-IQ Quorum DCD Management IP address (only if auto-failover HA is setup, leave empty and hit enter if not needed)?"
   read ipquorum
 
   echo -e "\nNote: please, run the script from the secondary BIG-IQ CM active or standby."
+else
+  echo -e "No HA."
 fi
 
 echo
 
 # Discovery/Listener Address (eth0 or eth1 or eth2)
 dcdip1=()
-while IFS= read -r -p "BIG-IQ DCD Discovery/Listener Address IP address(es) (end with an empty line)? " line; do
+while IFS= read -r -p "BIG-IQ DCD Discovery/Listener IP address(es) (end with an empty line, hit enter if not needed)? " line; do
     [[ $line ]] || break  # break if line is empty
     dcdip1+=("$line")
 done
@@ -185,7 +195,7 @@ echo
 
 # Data Collection IP Address (eth0 or eth1 or eth2)
 dcdip2=()
-while IFS= read -r -p "BIG-IQ DCD Data Collection IP address(es) (end with an empty line)? " line; do
+while IFS= read -r -p "BIG-IQ DCD Data Collection IP address(es) (end with an empty line, hit enter if not needed)? " line; do
     [[ $line ]] || break  # break if line is empty
     dcdip2+=("$line")
 done
@@ -303,12 +313,14 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
 fi
 
 if [[ $ha = "yes"* ]]; then
-  echo -e "\n***HA\n\n*** TEST BIG-IQ primary CM => secondary CM"
+  echo -e "\n*** High Availability\n\n*** TEST BIG-IQ primary CM => secondary CM"
   echo -e "****************************************************"
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
       $nc $ipcm2m ${portha[$j]%,*}
   done
+
+  echo -e "\nNote: \n- 27017 port used only <= 7.0.\n- 5432 port used only >= 7.1"
 
   echo -e "\n*** TEST BIG-IQ secondary CM => primary CM"
   echo -e "******************************************"
@@ -322,7 +334,7 @@ if [[ $ha = "yes"* ]]; then
 
   #echo -e "\nNote: 28015 and 29015 ports used only <= 6.1"
 
-  echo -e "\nNote: 27017 port used only <= 7.0. 5432 port used only >= 7.1"
+  echo -e "\nNote: \n- 27017 port used only <= 7.0.\n- 5432 port used only >= 7.1"
 
   if [ ! -z "$ipquorum" ]; then
     echo -e "\nNote: Only for <= 7.0 and if auto-failover HA is setup."
