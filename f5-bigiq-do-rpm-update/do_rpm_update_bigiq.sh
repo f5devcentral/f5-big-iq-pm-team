@@ -44,10 +44,12 @@ if [ -f $home/$newRPM ]; then
     echo -e "\nDO Info: "
     echo "$latestVersion"
     if rpm -Uv --force "$home/$newRPM" ; then
+        echo "Restart restjavad..."
         bigstart restart restjavad &
         restartProc=$!
         wait $restartProc
         sleep 5
+         echo "Restart restnoded..."
         bigstart restart restnoded &
         restartProc=$!
         wait $restartProc
