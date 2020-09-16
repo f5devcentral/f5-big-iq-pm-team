@@ -73,10 +73,8 @@ if [ -f $home/$newRPM ]; then
             # check
             cat /var/config/rest/config/restjavad.properties.json | jq .global.appSvcs
             #rm -rf /usr/lib/dco/packages/f5-appsvcs/$currentRPM
-            mv $home/$newRPM /usr/lib/dco/packages/f5-appsvcs/
-        else
-            mv $home/$newRPM /usr/lib/dco/packages/f5-appsvcs/
         fi
+        mv $home/$newRPM /usr/lib/dco/packages/f5-appsvcs/
         mount -o remount,ro /usr
         echo "Restart restjavad..."
         bigstart restart restjavad &
