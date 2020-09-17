@@ -4,11 +4,11 @@ Installation instructions
 Download the script on both Active BIG-IQ CM.
 
 ```
-# bash
-# mkdir /shared/scripts
-# cd /shared/scripts
-# curl https://raw.githubusercontent.com/f5devcentral/f5-big-iq-pm-team/master/f5-bigiq-dcd-health-checks/f5_dcd_health_checks.sh > f5_dcd_health_checks.sh
-# chmod +x f5_dcd_health_checks.sh
+bash
+mkdir /shared/scripts
+cd /shared/scripts
+curl https://raw.githubusercontent.com/f5devcentral/f5-big-iq-pm-team/master/f5-bigiq-dcd-health-checks/f5_dcd_health_checks.sh > f5_dcd_health_checks.sh
+chmod +x f5_dcd_health_checks.sh
 ```
 
 Usage
@@ -17,7 +17,7 @@ Usage
 The script needs to be executed on *Active BIG-IQ CM*.
 
 ```
-# cd /shared/scripts
+cd /shared/scripts
 #./f5_dcd_health_checks.sh [<BIG-IQ DCD sshuser>]
 ```
 
