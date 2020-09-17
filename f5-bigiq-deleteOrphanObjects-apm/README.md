@@ -1,7 +1,7 @@
 Installation instructions
 -------------------------
 
-Download the script on both Active BIG-IQ CM.
+Download the script on Active BIG-IQ CM.
 
 ```
 # bash
