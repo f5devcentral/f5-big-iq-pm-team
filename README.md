@@ -15,3 +15,5 @@ Tools | Description
 [f5-bigiq-f5sanitizeUsageReport](./f5-bigiq-sanitizeUsageReport) | Script to obfuscated IP/MAC addresses and Hostnames from a BIG-IQ JSON report.<br/>/!\ **This feature is available in BIG-IQ 6.1** /!\
 [f5-bigiq-syncSharedAFMobjectsTool](./f5-bigiq-syncSharedAFMobjectsTool) | Script to export AFM objects (port lists, address lists, rule lists, policies and policy rules) from 1 BIG-IQ to another.
 [f5-bigiq-branchRuleManager](./f5-bigiq-branchRuleManager) | This script will allow you to set advanced expression for branch rules in access policies (per-session and per-request).
+[f5-bigiq-deleteOrphanObjects](./f5-bigiq-deleteOrphanObjects) | This script will identify and delete orphan objects on BIG-IQ.
+[f5-bigiq-ssl-vpn-split-tunneling-and-ipv4exclude-addresses](./5-bigiq-ssl-vpn-split-tunneling-and-ipv4exclude-addresses) | This script will update IPv4 Exclude Address Space for all the Network Access objects for new IP Address list in the given Access Group on the BIG-IQ.
