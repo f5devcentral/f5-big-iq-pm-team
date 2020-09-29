@@ -22,6 +22,7 @@
 # 04/08/2020: v1.1  r.jouhannet@f5.com    Add $home/ in the if rpm -Uv --force 
 # 09/15/2020: v1.2  r.jouhannet@f5.com    Remove adding rpmFilePath in restjavad.properties.json 
 #                                         BIG-IQ will use the newest AS3 RPM available in /usr/lib/dco/packages/f5-appsvcs/
+# 09/28/2020: v1.3  r.jouhannet@f5.com    cp the rpm instead of mv
 
 home="/home/admin"
 
@@ -74,7 +75,7 @@ if [ -f $home/$newRPM ]; then
             cat /var/config/rest/config/restjavad.properties.json | jq .global.appSvcs
             #rm -rf /usr/lib/dco/packages/f5-appsvcs/$currentRPM
         fi
-        mv $home/$newRPM /usr/lib/dco/packages/f5-appsvcs/
+        cp $home/$newRPM /usr/lib/dco/packages/f5-appsvcs/
         mount -o remount,ro /usr
         echo "Restart restjavad..."
         bigstart restart restjavad &
