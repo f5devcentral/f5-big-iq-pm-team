@@ -28,6 +28,7 @@
 # 08/28/2020: v1.7  r.jouhannet@f5.com    Split Management IP and Discovery IP for CM
 #                                         Split Discovery/Listener and Data Collection IP for DCD
 # 09/04/2020: v1.8  r.jouhannet@f5.com    Automatically get eth0 BIG-IQ CM. Update note for HA, improve user inputs.
+# 10/12/2020: v1.9  r.jouhannet@f5.com    Add latency checks
 
 # Usage:
 #./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
@@ -211,6 +212,9 @@ while IFS= read -r -p "BIG-IP IP address(es) (end with an empty line)? " line; d
     bigipip+=("$line")
 done
 
+echo -e "\nDo you want to test the latency (ICMP protocol open required)? (yes, default no)"
+read latency
+
 #printf '  «%s»\n' "${bigipip[@]}"
 arraylengthbigipip=${#bigipip[@]}
 
@@ -225,8 +229,13 @@ if [[ $arraylengthbigipip -gt 0 ]]; then
     do
         $nc ${bigipip[$i]} ${portcmbigip[$j]%,*} 
     done
+    if [[ $latency = "yes"* ]]; then
+      echo -e "Latency: $(ping ${bigipip[$i]} -c 100 -i 0.010  | tail -1)"
+      echo
+    fi
   done
   echo -e "\nNote: Port 22 (SSH) is only required for BIG-IP versions 11.5.0 to 11.6.0"
+
 fi
 
 if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
@@ -241,6 +250,9 @@ if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
       do
         cmd="connection_check ${portdcdbigip[$k]:(-3)} ${dcdip1[$j]} ${portdcdbigip[$k]%,*} ; $cmd"
       done
+      if [[ $latency = "yes"* ]]; then
+        cmd="$cmd ping ${dcdip1[$j]} -c 100 -i 0.010  | tail -1"
+      fi
     done
     echo -e "BIG-IP ${bigipip[$i]} $bigipsshuser password"
     ssh $bigipsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigipsshuser@${bigipip[$i]} "$(typeset -f connection_check); $cmd"
@@ -263,6 +275,10 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
     do
         $nc ${dcdip2[$i]} ${portcmdcd[$j]%,*}
     done
+    if [[ $latency = "yes"* ]]; then
+      echo -e "Latency: $(ping ${dcdip2[$i]} -c 100 -i 0.010  | tail -1)"
+      echo
+    fi
   done
 
   echo -e "\n*** TEST BIG-IQ DCD(s) => primary CM"
@@ -297,6 +313,10 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
             echo -e "BIG-IQ DCD $a $bigiqsshuser password"
             ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$b $cmd
             echo
+            if [[ $latency = "yes"* ]]; then
+              echo -e "Latency: $(ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$b "ping $a -c 100 -i 0.010  | tail -1")"
+              echo
+            fi
             echo -e "* DCD $b to DCD $a"
             cmd=""
             for (( j=0; j<${arraylengthportdcddcd}; j++ ));
@@ -319,6 +339,9 @@ if [[ $ha = "yes"* ]]; then
   do
       $nc $ipcm2m ${portha[$j]%,*}
   done
+  if [[ $latency = "yes"* ]]; then
+    echo -e "Latency: $(ping $ipcm2m -c 100 -i 0.010  | tail -1)"
+  fi
 
   echo -e "\nNote: \n- 27017 port used only <= 7.0.\n- 5432 port used only >= 7.1"
 
