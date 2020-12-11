@@ -34,16 +34,19 @@ subjectAltName = @alt_names
 IP.1 = $IP
 " > san.cnf
 
+echo "Generate new self-signed certificate using $IP (validity=$DAYS, key lenghts=$KEY_LENGTH)"
 openssl req -x509 -nodes -days "$DAYS" -newkey rsa:"$KEY_LENGTH" -keyout key.pem -out cert.pem -config san.cnf
 rm san.cnf
 
-# backup the original certificate and key
+echo "Finished generating the certificate"
+echo "Backing up the BIG-IQ system's default SSL certificate, and key"
 mv /config/httpd/conf/ssl.crt/server.crt /config/httpd/conf/ssl.crt/server.crt.default
 mv /config/httpd/conf/ssl.key/server.key /config/httpd/conf/ssl.key/server.key.default
 
-# rename the newly generated key and crt
+echo "Replacing the BIG-IQ system's default SSL certificate, and key"
 mv cert.pem /config/httpd/conf/ssl.crt/server.crt
 mv key.pem /config/httpd/conf/ssl.key/server.key
 
-# restart webd
+echo "Restarting the BIG-IQ system's web server"
 tmsh restart sys service webd
+
