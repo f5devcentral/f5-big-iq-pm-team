@@ -18,3 +18,4 @@ Tools | Description
 [f5-bigiq-deleteOrphanObjects-apm](./f5-bigiq-deleteOrphanObjects-apm) | This script will identify and delete orphan APM objects on BIG-IQ (Access Policy Manager).
 [f5-bigiq-ssl-vpn-split-tunneling-and-ipv4exclude-addresses](./5-bigiq-ssl-vpn-split-tunneling-and-ipv4exclude-addresses) | This script will update IPv4 Exclude Address Space for all the Network Access objects for new IP Address list in the given Access Group on the BIG-IQ.
 [f5-bigiq-unreachable-device-license](./f5-bigiq-unreachable-device-license) | This powershell script will help you to get a license for an unreachable BIG-IP device from a License Pool on BIG-IQ.
+[f5-bigiq-generate-cert-with-SAN](./f5-bigiq-generate-cert-with-SAN) | This bash script will help you to generate self signed cert with IP address in SAN field.
