@@ -14,7 +14,7 @@ chmod +x f5_dcd_health_checks.sh
 Usage
 -----
 
-The script needs to be executed on *Active BIG-IQ CM*.
+The script needs to be executed on *Active BIG-IQ CM* (this script is compatible only for BIG-IQ 7.x)
 
 ```
 cd /shared/scripts
