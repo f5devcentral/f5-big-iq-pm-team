@@ -20,5 +20,5 @@ The new AS3 RPM needs to be uploaded in /home/admin.
 
 ```
 cd /shared/scripts
-./as3_rpm_update_bigiq.sh <newRPM> <currentRPM>
+./as3_rpm_update_bigiq.sh <newRPM>
 ```
