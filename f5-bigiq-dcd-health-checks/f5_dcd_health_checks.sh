@@ -36,7 +36,7 @@ fi
 PROG=${0##*/}
 set -u
 
-logname="f5data_$(date +"%m-%d-%Y_%H%M").log"
+logname="f5data_dcd_health_$(date +"%m-%d-%Y_%H%M").log"
 rm -f $logname > /dev/null 2>&1
 exec 3>&1 1>>$logname 2>&1
 
@@ -62,15 +62,30 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
 
 ssh -o StrictHostKeyChecking=no $bigiqsshuser@${dcdip[$i]} <<'ENDSSH'
 bash
+echo -e "\n-------- localhost:9200/_cat/nodes?h=ip"
 curl -s localhost:9200/_cat/nodes?h=ip | while read ip ; do ping -s120 -ni 0.3 -c 5 $ip ; done 2>&1
+echo -e "\n-------- localhost:9200/_cluster/health?pretty"
 curl -s localhost:9200/_cluster/health?pretty
+echo -e "\n-------- localhost:9200/_cat/allocation?v"
 curl -s localhost:9200/_cat/allocation?v
+echo -e "\n-------- localhost:9200/_cat/nodes?v"
 curl -s localhost:9200/_cat/nodes?v
+echo -e "\n-------- localhost:9200/_cat/indices?v"
 curl -s localhost:9200/_cat/indices?v
+echo -e "\n-------- localhost:9200/_cat/shards?v"
 curl -s localhost:9200/_cat/shards?v
+echo -e "\n-------- localhost:9200/_cat/aliases?v"
 curl -s localhost:9200/_cat/aliases?v
+echo -e "\n-------- localhost:9200/_cat/tasks?v"
 curl -s localhost:9200/_cat/tasks?v
+echo -e "\n-------- localhost:9200/_all/_settings"
 curl -s localhost:9200/_all/_settings | jq .
+echo -e "\n-------- localhost:9200/_settings"
+curl -s localhost:9200/_settings | jq .
+echo -e "\n-------- localhost:9200/metadata_dynamic_global_parameters"
+curl -s localhost:9200/metadata_dynamic_global_parameters | jq .
+echo -e "\n-------- localhost:9200/metadata_dynamic_global_parameters/_search?size=1000"
+curl -s localhost:9200/metadata_dynamic_global_parameters/_search?size=1000 | jq .
 ENDSSH
 
     echo
@@ -88,4 +103,4 @@ if [[ $c  == 0 ]]; then
        echo -e "n/a" | tee /dev/fd/3
 fi
 
-echo -e "\nOutput located in $logname.\n" | tee /dev/fd/3
+echo -e "\nOutput located in $logname\n" | tee /dev/fd/3
