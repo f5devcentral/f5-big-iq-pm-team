@@ -29,6 +29,7 @@
 #                                         Split Discovery/Listener and Data Collection IP for DCD
 # 09/04/2020: v1.8  r.jouhannet@f5.com    Automatically get eth0 BIG-IQ CM. Update note for HA, improve user inputs.
 # 10/12/2020: v1.9  r.jouhannet@f5.com    Add latency checks
+# 01/21/2021: v2.0  r.jouhannet@f5.com    Add support BIG-IQ 8.0
 
 # Usage:
 #./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
@@ -117,40 +118,18 @@ function connection_check() {
   fi
 }
 
-# used for all checks running on BIG-IQ CM, DCD
-nc="nc -z -v -w5"
+# Network Tool to test connectivity
+nc="nc -v -w 2"
 
-# Active/Standby/Quorum DCD (BIG_IQ 7.0 and above)
-do_pcs_check() {
-  # Pacemaker uses tcp port 2224 for communication
-  echo -e "BIG-IQ $1 $bigiqsshuser password"
-  ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no -f $bigiqsshuser@$1 'nohup sh -c "( ( nc -vl 2224 &>/dev/null) & )"'
-  # to make sure ssh has returned.
-  sleep 1
-  nc -zv -w 2 $1 2224 &>/dev/null
-
-  if [[ $? -ne 0 ]]; then
-    echo "Pacemaker check failed for $1 port 2224 [tcp]"
-  else
-    echo "Pacemaker check succeeded for $1 port 2224 [tcp]"
-  fi
-}
-
-do_corosync_check() {
-  # Corosync sends the data using udp port 5404 and receives the data using udp port 5405
-  nc -zvu -p 5404 -w 2 $1 5405 &>/dev/null
-
-  if [[ $? -ne 0 ]]; then
-    echo "Corosync check failed sends port 5404, receives $1 port 5405 [udp]"
-  else
-    echo "Corosync check succeeded sends port 5404, receives $1 port 5405 [udp]"
-  fi
-}
+version=$(curl -s http://localhost:8100/shared/resolver/device-groups/cm-shared-all-big-iqs/devices?\$select=version | jq .items[0].version)
+version=${version:1:${#version}-2}
 
 #################################################################################
 
 PROG=${0##*/}
 set -u
+
+echo -e "\nBIG-IQ Version: $version"
 
 echo -e "\nNote: you may use the BIG-IQ CM/DCD self IPs depending on your network architecture and DCD discovery IP.\nIf you get 'Connection refused', check if the self-ip is used instead of the management interface for discovery IP on the DCDs."
 
@@ -172,7 +151,7 @@ fi
 
 echo -e "\nBIG-IQ HA? (yes, default no)"
 read ha
-if [[ $ha = "yes"* ]]; then
+if [[ $ha = "yes"* ||  $ha = "y"* ]]; then
   echo -e "BIG-IQ CM secondary Management IP address (either active or standby depending where you run the script):"
   read ipcm2m
   echo -e "BIG-IQ Quorum DCD Management IP address (only if auto-failover HA is setup, leave empty and hit enter if not needed)?"
@@ -227,14 +206,15 @@ if [[ $arraylengthbigipip -gt 0 ]]; then
   do
     for (( j=0; j<${arraylengthportcmbigip}; j++ ));
     do
-        $nc ${bigipip[$i]} ${portcmbigip[$j]%,*} 
+        echo -e "\nCheck for ${bigipip[$i]} port ${portcmbigip[$j]}"
+        cat /dev/null | $nc ${bigipip[$i]} ${portcmbigip[$j]%,*} 2>&1 | grep -v Version | grep -v received | grep -v SSH
     done
-    if [[ $latency = "yes"* ]]; then
-      echo -e "Latency: $(ping ${bigipip[$i]} -c 100 -i 0.010  | tail -1)"
+    if [[ $latency = "yes"* || $latency = "y"* ]]; then
+      echo -e "\nLatency: $(ping ${bigipip[$i]} -c 100 -i 0.010  | tail -1)"
       echo
     fi
   done
-  echo -e "\nNote: Port 22 (SSH) is only required for BIG-IP versions 11.5.0 to 11.6.0"
+  echo -e "Note: Port 22 (SSH) is only required for BIG-IP versions 11.5.0 to 11.6.0"
 
 fi
 
@@ -250,8 +230,8 @@ if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
       do
         cmd="connection_check ${portdcdbigip[$k]:(-3)} ${dcdip1[$j]} ${portdcdbigip[$k]%,*} ; $cmd"
       done
-      if [[ $latency = "yes"* ]]; then
-        cmd="$cmd ping ${dcdip1[$j]} -c 100 -i 0.010  | tail -1"
+      if [[ $latency = "yes"* || $latency = "y"* ]]; then
+        cmd="$cmd echo -e \"\nLatency: $(ping ${dcdip1[$j]} -c 100 -i 0.010  | tail -1)\""
       fi
     done
     echo -e "BIG-IP ${bigipip[$i]} $bigipsshuser password"
@@ -259,7 +239,7 @@ if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
     echo
   done
 
-  echo -e "\nNote 1: FPS uses port 8008, DoS uses port 8020, AFM uses port 8018, ASM uses port 8514 and Access/IPsec uses port 9997.\nIf you are not using those modules, ignore the failure."
+  echo -e "Note 1: FPS uses port 8008, DoS uses port 8020, AFM uses port 8018, ASM uses port 8514 and Access/IPsec uses port 9997.\nIf you are not using those modules, ignore the failure."
 
   echo -e "\nNote 2: If BIG-IP version < 13.1.0.5, run from BIG-IQ DCD: curl -k -u admin:password https://<bigipaddress>/mgmt/shared/echo"
 
@@ -273,10 +253,11 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
   do
     for (( j=0; j<${arraylengthportcmdcd}; j++ ));
     do
-        $nc ${dcdip2[$i]} ${portcmdcd[$j]%,*}
+        echo -e "\nCheck for ${dcdip2[$i]} port ${portcmdcd[$j]}"
+        cat /dev/null | $nc ${dcdip2[$i]} ${portcmdcd[$j]%,*} 2>&1 | grep -v Version | grep -v received | grep -v SSH
     done
-    if [[ $latency = "yes"* ]]; then
-      echo -e "Latency: $(ping ${dcdip2[$i]} -c 100 -i 0.010  | tail -1)"
+    if [[ $latency = "yes"* || $latency = "y"* ]]; then
+      echo -e "\nLatency: $(ping ${dcdip2[$i]} -c 100 -i 0.010  | tail -1)"
       echo
     fi
   done
@@ -288,7 +269,7 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
     cmd=""
     for (( j=0; j<${arraylengthportdcdcm}; j++ ));
     do
-      cmd="$nc $ipcm1d ${portdcdcm[$j]%,*} ; $cmd"
+      cmd="echo -e \"\nCheck for $ipcm1d port ${portdcdcm[$j]}\"; cat /dev/null | $nc $ipcm1d ${portdcdcm[$j]%,*} 2>&1 | grep -v Version | grep -v received | grep -v SSH; $cmd"
     done
     echo -e "BIG-IQ DCD ${dcdip2[$i]} $bigiqsshuser password"
     ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@${dcdip2[$i]} $cmd
@@ -308,20 +289,20 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
             cmd=""
             for (( j=0; j<${arraylengthportdcddcd}; j++ ));
             do
-              cmd="$nc $a ${portdcddcd[$j]%,*} ; $cmd"
+              cmd="echo -e \"\nCheck for $a port ${portdcddcd[$j]}\"; cat /dev/null | $nc $a ${portdcddcd[$j]%,*} 2>&1 | grep -v Version | grep -v received | grep -v SSH;; $cmd"
             done
             echo -e "BIG-IQ DCD $a $bigiqsshuser password"
             ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$b $cmd
             echo
-            if [[ $latency = "yes"* ]]; then
-              echo -e "Latency: $(ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$b "ping $a -c 100 -i 0.010  | tail -1")"
+            if [[ $latency = "yes"* || $latency = "y"* ]]; then
+              echo -e "\nLatency: $(ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$b "ping $a -c 100 -i 0.010  | tail -1")"
               echo
             fi
             echo -e "* DCD $b to DCD $a"
             cmd=""
             for (( j=0; j<${arraylengthportdcddcd}; j++ ));
             do
-              cmd="$nc $a ${portdcddcd[$j]%,*} ; $cmd"
+              cmd="echo -e \"\nCheck for $a port ${portdcddcd[$j]}\"; cat /dev/null | $nc $a ${portdcddcd[$j]%,*} 2>&1 | grep -v Version | grep -v received | grep -v SSH; $cmd"
             done
             echo -e "BIG-IQ DCD $b $bigiqsshuser password"
             ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$a $cmd
@@ -332,15 +313,16 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
 
 fi
 
-if [[ $ha = "yes"* ]]; then
+if [[ $ha = "yes"*  || $ha = "y"* ]]; then
   echo -e "\n*** High Availability\n\n*** TEST BIG-IQ primary CM => secondary CM"
   echo -e "****************************************************"
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
-      $nc $ipcm2m ${portha[$j]%,*}
+      echo -e "\nCheck for $ipcm2m port ${portha[$j]}"
+      cat /dev/null | $nc $ipcm2m ${portha[$j]%,*} 2>&1 | grep -v Version | grep -v received | grep -v SSH
   done
-  if [[ $latency = "yes"* ]]; then
-    echo -e "Latency: $(ping $ipcm2m -c 100 -i 0.010  | tail -1)"
+  if [[ $latency = "yes"* || $latency = "y"* ]]; then
+    echo -e "\nLatency: $(ping $ipcm2m -c 100 -i 0.010  | tail -1)"
   fi
 
   echo -e "\nNote: \n- 27017 port used only <= 7.0.\n- 5432 port used only >= 7.1"
@@ -350,7 +332,7 @@ if [[ $ha = "yes"* ]]; then
   cmd=""
   for (( j=0; j<${arraylengthportha}; j++ ));
   do
-    cmd="$nc $ipcm1m ${portha[$j]%,*} ; $cmd"
+    cmd="echo -e \"\nCheck for $ipcm1m port ${portha[$j]}\"; cat /dev/null | $nc $ipcm1m ${portha[$j]%,*} 2>&1 | grep -v Version | grep -v received | grep -v SSH; $cmd"
   done
   echo -e "BIG-IQ CM $ipcm2m $bigiqsshuser password"
   ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$ipcm2m $cmd
@@ -359,21 +341,24 @@ if [[ $ha = "yes"* ]]; then
 
   echo -e "\nNote: \n- 27017 port used only <= 7.0.\n- 5432 port used only >= 7.1"
 
+  # Active/Standby/Quorum DCD (BIG_IQ 7.0 and above)
   if [ ! -z "$ipquorum" ]; then
     echo -e "\nNote: Only for <= 7.0 and if auto-failover HA is setup."
+    # Pacemaker uses tcp port 2224 for communication
     echo -e "\n*** TEST BIG-IQ primary CM => secondary CM"
     echo -e "******************************************"
-    do_pcs_check $ipcm2m
+    echo -e "Make sure traffic is open from $ipcm1m to $ipcm2m port 2224 [tcp].\n"
     echo -e "\n*** TEST BIG-IQ DCD Quorum => primary CM"
     echo -e "******************************************"
-    do_pcs_check $ipquorum
+    echo -e "Make sure traffic is open from $ipcm1m to $ipquorum port 2224 [tcp].\n"
 
+    # Corosync
     echo -e "\n*** TEST BIG-IQ primary CM => secondary CM"
     echo -e "******************************************"
-    do_corosync_check $ipcm2m
+    echo -e "Make sure traffic is open from $ipcm1m port 5404 to $ipcm2m port 5405 [udp].\n"
     echo -e "\n*** TEST BIG-IQ primary CM => DCD Quorum"
     echo -e "******************************************"
-    do_corosync_check $ipquorum
+    echo -e "Make sure traffic is open from $ipcm1m port 5404 to $ipquorum port 5405 [udp].\n"
   fi
 fi
 
