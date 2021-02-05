@@ -3,7 +3,9 @@ Installation instructions
 
 [K15612: Connectivity requirements for the BIG-IQ system](https://support.f5.com/csp/article/K15612)
 
-Download the script on both Active/Standby BIG-IQ CM(s).
+1. Use SSH to log in as root to your primary BIG-IQ CM.
+
+2. From the command line on the primary BIG-IQ CM, type the following 4 commands.
 
 ```
 bash
@@ -13,16 +15,22 @@ curl https://raw.githubusercontent.com/f5devcentral/f5-big-iq-pm-team/master/f5-
 chmod +x f5_network_connectivity_checks.sh
 ```
 
-Usage
------
+This command sequence:
+a. Starts Bash.
+b. Creates a folder for the script.
+c. Navigates to the new folder.
+d. Copies the script to the new folder.
 
-The script needs to be executed on *both Active/Standby BIG-IQ CM*.
 
-Port 22 is required between BIG-IQ CM(s), DCD(s) and BIG-IP(s) to run the connectivy checks.
+3. Type the following command to start the script.
 
 ```
-cd /shared/scripts
 ./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
 ```
 
-BIG-IP/BIG-IQ ssh users and private keys are optionals. **root** user is used by default if nothing is specified and the passwords will be asked.
+Note: If your devices require keys for SSH access, use the optional script variables to supply those keys to the script.
+
+The script begins a series of prompts and responses. For each prompt, you respond with an IP address and the
+script responds by confirming that there is a connection path from the BIG-IQ to that address.
+
+4. Respond to each script prompt with the IP address of the component that is being queried.

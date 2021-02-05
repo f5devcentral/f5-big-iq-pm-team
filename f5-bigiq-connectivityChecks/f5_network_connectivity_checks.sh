@@ -3,7 +3,7 @@
 #set -x
 
 #################################################################################
-# Copyright 2020 by F5 Networks, Inc.
+# Copyright 2021 by F5 Networks, Inc.
 #
 #Licensed under the Apache License, Version 2.0 (the "License");
 #you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 #                                         Split Discovery/Listener and Data Collection IP for DCD
 # 09/04/2020: v1.8  r.jouhannet@f5.com    Automatically get eth0 BIG-IQ CM. Update note for HA, improve user inputs.
 # 10/12/2020: v1.9  r.jouhannet@f5.com    Add latency checks
-# 01/21/2021: v2.0  r.jouhannet@f5.com    Add support BIG-IQ 8.0
+# 04/02/2021: v2.0  r.jouhannet@f5.com    Add support BIG-IQ 8.0
 
 # Usage:
 #./f5_network_connectivity_checks.sh [<BIG-IP sshuser> <BIG-IQ sshuser> <~/.ssh/bigip_priv_key> <~/.ssh/bigiq_priv_key>]
@@ -131,17 +131,20 @@ set -u
 
 echo -e "\nBIG-IQ Version: $version"
 
-echo -e "\nNote: you may use the BIG-IQ CM/DCD self IPs depending on your network architecture and DCD discovery IP.\nIf you get 'Connection refused', check if the self-ip is used instead of the management interface for discovery IP on the DCDs."
+echo -e "\nFollow the prompts to specify the IP addresses for each component in your BIG-IQ solution."
 
-echo -e "\nBIG-IQ CM primary IP address(s) list:"
+echo - e "\nNote: If you get 'Connection refused', check to see if either your BIG-IQs or DCDs are using a self-IP address instead of the management interface for discovery."
+echo - e "Depending on your network architecture and the discovery addresses.you chose, you might need to use the BIG-IQ CM and DCD self IP addressses here."
+
+echo -e "\nBIG-IQ CM IP address(s) list:"
 ip addr show | grep -w inet | grep -v tmm | grep global
 
-echo -e "\nBIG-IQ CM primary Management IP address (eth0)?"
+echo -e "\nBIG-IQ CM Management IP address (eth0):"
 #read ipcm1m
 ipcm1m=$(ip addr show | grep -w inet | grep -v tmm | grep global | grep -E 'eth0|mgmt' | awk '{print $2}' | head -c -4)
 echo $ipcm1m
 
-echo -e "\nBIG-IQ CM primary Discovery IP address (eth1 or eth2)? (leave empty and hit enter if not Discovery IP address)"
+echo -e "\nDiscovery IP address for this BIG-IQ? (If the BIG-IQ uses the eth0 management IP address for discovery, leave empty and hit Enter) "
 read ipcm1d
 
 if [[ -z $ipcm1d ]]; then
@@ -149,15 +152,15 @@ if [[ -z $ipcm1d ]]; then
   echo -e "Discovery IP address is Management IP address ($ipcm1d)"
 fi
 
-echo -e "\nBIG-IQ HA? (yes, default no)"
+echo -e "\nBIG-IQ HA? Type y for yes, n for no (the default)."
 read ha
 if [[ $ha = "yes"* ||  $ha = "y"* ]]; then
-  echo -e "BIG-IQ CM secondary Management IP address (either active or standby depending where you run the script):"
+  echo -e "Management IP address for the HA peer:"
   read ipcm2m
-  echo -e "BIG-IQ Quorum DCD Management IP address (only if auto-failover HA is setup, leave empty and hit enter if not needed)?"
+  echo -e "Management IP address for the BIG-IQ Quorum DCD? (only if auto-failover HA is set up. If not needed, leave empty and hit Enter) "
   read ipquorum
 
-  echo -e "\nNote: please, run the script from the secondary BIG-IQ CM active or standby."
+  echo -e "\nNote: You must run this script from both the primary and the secondary HA BIG-IQ CMs."
 else
   echo -e "No HA."
 fi
@@ -166,7 +169,7 @@ echo
 
 # Discovery/Listener Address (eth0 or eth1 or eth2)
 dcdip1=()
-while IFS= read -r -p "BIG-IQ DCD Discovery/Listener IP address(es) (end with an empty line, hit enter if not needed)? " line; do
+while IFS= read -r -p "BIG-IQ DCD Discovery/Listener IP address(es)? (If not needed, leave empty and hit Enter) " line; do
     [[ $line ]] || break  # break if line is empty
     dcdip1+=("$line")
 done
@@ -175,7 +178,7 @@ echo
 
 # Data Collection IP Address (eth0 or eth1 or eth2)
 dcdip2=()
-while IFS= read -r -p "BIG-IQ DCD Data Collection IP address(es) (end with an empty line, hit enter if not needed)? " line; do
+while IFS= read -r -p "BIG-IQ DCD Data Collection IP address(es)? (If not needed, leave empty and hit Enter.) " line; do
     [[ $line ]] || break  # break if line is empty
     dcdip2+=("$line")
 done
@@ -186,12 +189,12 @@ arraylengthdcdip=${#dcdip1[@]}
 echo
 
 bigipip=()
-while IFS= read -r -p "BIG-IP IP address(es) (end with an empty line)? " line; do
+while IFS= read -r -p "Discovery IP address for BIG-IP? (If not needed, leave empty and hit Enter.) " line; do
     [[ $line ]] || break  # break if line is empty
     bigipip+=("$line")
 done
 
-echo -e "\nDo you want to test the latency (ICMP protocol open required)? (yes, default no)"
+echo -e "\nDo you want to test the latency? (ICMP protocol open required) Type y for yes, n for no (the default)."
 read latency
 
 #printf '  «%s»\n' "${bigipip[@]}"
@@ -239,11 +242,7 @@ if [[ $arraylengthdcdip -gt 0 && $arraylengthbigipip -gt 0 ]]; then
     echo
   done
 
-  echo -e "Note 1: FPS uses port 8008, DoS uses port 8020, AFM uses port 8018, ASM uses port 8514 and Access/IPsec uses port 9997.\nIf you are not using those modules, ignore the failure."
-
-  echo -e "\nNote 2: If BIG-IP version < 13.1.0.5, run from BIG-IQ DCD: curl -k -u admin:password https://<bigipaddress>/mgmt/shared/echo"
-
-
+  echo -e "Note: FPS uses port 8008, DoS uses port 8020, AFM uses port 8018, ASM uses port 8514 and Access/IPsec uses port 9997.\nIf you are not using those modules, ignore the failure."
 fi
 
 if [[ $arraylengthdcdip -gt 0 ]]; then
@@ -289,7 +288,7 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
             cmd=""
             for (( j=0; j<${arraylengthportdcddcd}; j++ ));
             do
-              cmd="echo -e \"\nCheck for $a port ${portdcddcd[$j]}\"; cat /dev/null | $nc $a ${portdcddcd[$j]%,*} 2>&1 | grep -v Version | grep -v received | grep -v SSH;; $cmd"
+              cmd="echo -e \"\nCheck for $b port ${portdcddcd[$j]}\"; cat /dev/null | $nc $a ${portdcddcd[$j]%,*} 2>&1 | grep -v Version | grep -v received | grep -v SSH; $cmd"
             done
             echo -e "BIG-IQ DCD $a $bigiqsshuser password"
             ssh $bigiqsshkey -o StrictHostKeyChecking=no -o CheckHostIP=no $bigiqsshuser@$b $cmd
@@ -361,6 +360,10 @@ if [[ $ha = "yes"*  || $ha = "y"* ]]; then
     echo -e "Make sure traffic is open from $ipcm1m port 5404 to $ipquorum port 5405 [udp].\n"
   fi
 fi
+
+echo -e "\nPlease make sure to run this check from both the primary and secondary BIG-IQ CM."
+
+echo -e "\nAdditionally, If you are managing version 13.1.0.5 or earlier BIG-IP devices, you need to login to one of the DCDs in the cluster and type the following command: curl -k -u admin:password https://<bigipaddress>/mgmt/shared/echo"
 
 echo -e "\nPlease, also visit https://support.f5.com/csp/article/K15612"
 
