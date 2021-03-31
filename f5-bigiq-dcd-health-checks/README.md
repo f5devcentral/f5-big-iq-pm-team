@@ -1,7 +1,7 @@
 Installation instructions
 -------------------------
 
-Download the script on both Active BIG-IQ CM.
+Download the script on Active BIG-IQ CM.
 
 ```
 bash
@@ -14,11 +14,11 @@ chmod +x f5_dcd_health_checks.sh
 Usage
 -----
 
-The script needs to be executed on *Active BIG-IQ CM* (this script is compatible only for BIG-IQ 7.x)
+The script needs to be executed on *Active BIG-IQ CM*.
 
 ```
 cd /shared/scripts
-#./f5_dcd_health_checks.sh [<BIG-IQ DCD sshuser>]
+./f5_dcd_health_checks.sh [<BIG-IQ DCD sshuser>]
 ```
 
-BIG-IQ DCD ssh user is optional. **root** user is used by default if nothing is specified and the passwords will be asked.
+BIG-IQ DCD ssh user is optional. **root** user is used by default if nothing is specified.

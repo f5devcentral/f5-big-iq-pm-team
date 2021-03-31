@@ -19,6 +19,7 @@
 #################################################################################
 
 # 07/30/2020: v1.0  r.jouhannet@f5.com    Initial version
+# 03/31/2021: v1.1  r.jouhannet@f5.com    Updated the script so it works for 8.0
 
 # Usage:
 #./f5_dcd_health_checks.sh [<BIG-IQ DCD sshuser>]
@@ -45,12 +46,18 @@ echo -e "********************************" | tee /dev/fd/3
 
 dcdip=($(restcurl /shared/resolver/device-groups/cm-esmgmt-logging-group/devices | jq '.items[]|{log:.properties.isLoggingNode,add:.address}' -c | grep true | jq -r .add))
 
-echo -e "DCD(s):"
-echo -e "${dcdip[@]}\n"
+version=$(restcurl /shared/identified-devices/config/device-info | jq .version)
+
+echo -e "BIG-IQ version: ${version:1:${#version}-2}\n" | tee /dev/fd/3
+
+
+echo -e "DCD(s):" | tee /dev/fd/3
+echo -e "${dcdip[@]}\n" | tee /dev/fd/3
 
 arraylengthdcdip=${#dcdip[@]}
 
-echo -e "Number of DCD(s): $arraylengthdcdip\n"
+echo -e "Number of DCD(s): $arraylengthdcdip\n" | tee /dev/fd/3
+
 
 #################################################################################
 
@@ -59,6 +66,42 @@ if [[ $arraylengthdcdip -gt 0 ]]; then
   for (( i=0; i<${arraylengthdcdip}; i++ ));
   do
     echo -e "# BIG-IQ DCD ${dcdip[$i]} $bigiqsshuser password" | tee /dev/fd/3
+
+    if [[ ${version:1:${#version}-2} = "8.0"*  || ${version:1:${#version}-2} = "8.1"* ]]; then
+
+echo -e "\nHTTPS used.\n" | tee /dev/fd/3
+
+ssh -o StrictHostKeyChecking=no $bigiqsshuser@${dcdip[$i]} <<'ENDSSH'
+bash
+echo -e "\n-------- localhost:9200/_cat/nodes?h=ip"
+curl -s -k https://localhost:9200/_cat/nodes?h=ip | while read ip ; do ping -s120 -ni 0.3 -c 5 $ip ; done 2>&1
+echo -e "\n-------- localhost:9200/_cluster/health?pretty"
+curl -s -k https://localhost:9200/_cluster/health?pretty
+echo -e "\n-------- localhost:9200/_cat/allocation?v"
+curl -s -k https://localhost:9200/_cat/allocation?v
+echo -e "\n-------- localhost:9200/_cat/nodes?v"
+curl -s -k https://localhost:9200/_cat/nodes?v
+echo -e "\n-------- localhost:9200/_cat/indices?v"
+curl -s -k https://localhost:9200/_cat/indices?v
+echo -e "\n-------- localhost:9200/_cat/shards?v"
+curl -s -k https://localhost:9200/_cat/shards?v
+echo -e "\n-------- localhost:9200/_cat/aliases?v"
+curl -s -k https://localhost:9200/_cat/aliases?v
+echo -e "\n-------- localhost:9200/_cat/tasks?v"
+curl -s -k https://localhost:9200/_cat/tasks?v
+echo -e "\n-------- localhost:9200/_all/_settings"
+curl -s -k https://localhost:9200/_all/_settings | jq .
+echo -e "\n-------- localhost:9200/_settings"
+curl -s -k https://localhost:9200/_settings | jq .
+echo -e "\n-------- localhost:9200/metadata_dynamic_global_parameters"
+curl -s -k https://localhost:9200/metadata_dynamic_global_parameters | jq .
+echo -e "\n-------- localhost:9200/metadata_dynamic_global_parameters/_search?size=1000"
+curl -s -k https://localhost:9200/metadata_dynamic_global_parameters/_search?size=1000 | jq .
+ENDSSH
+
+    else
+
+echo -e "\nHTTP used.\n" | tee /dev/fd/3
 
 ssh -o StrictHostKeyChecking=no $bigiqsshuser@${dcdip[$i]} <<'ENDSSH'
 bash
@@ -87,6 +130,8 @@ curl -s localhost:9200/metadata_dynamic_global_parameters | jq .
 echo -e "\n-------- localhost:9200/metadata_dynamic_global_parameters/_search?size=1000"
 curl -s localhost:9200/metadata_dynamic_global_parameters/_search?size=1000 | jq .
 ENDSSH
+
+    fi
 
     echo
   done
