@@ -51,7 +51,7 @@ Here is an example of a playbook to run. Note the server IP address is the BIG-I
         include_role:
           name: f5devcentral.bigiq_as3_device_disaster_recovery
         vars:
-          dir_as3: /ansible/tmp
+          dir_as3: /ansible/tmp # the tmp folder will be saved on the BIG-IQ under /shared/scripts/ansible
           bigip1_target: 10.1.1.7 # BIG-IP device
           bigip2_target: 10.1.1.8 # BIG-IP device part of the same HA cluster
           device_username: admin # BIG-IP device user
