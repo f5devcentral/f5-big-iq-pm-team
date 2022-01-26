@@ -54,6 +54,7 @@ Here is an example of a playbook to run. Note the server IP address is the BIG-I
           dir_as3: /ansible/tmp # the tmp folder will be saved on the BIG-IQ under /shared/scripts/ansible
           bigip1_target: 10.1.1.7 # BIG-IP device
           bigip2_target: 10.1.1.8 # BIG-IP device part of the same HA cluster
+          # standalone: true
           device_username: admin # BIG-IP device user
           device_password: secret # BIG-IP device password
           device_port: 443  # BIG-IP device port
