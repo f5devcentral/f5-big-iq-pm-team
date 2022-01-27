@@ -29,7 +29,7 @@ docker run f5-ansible-runner ansible-playbook --version
 Usage
 -----
 
-Here is an example of a playbook to run. Note the server IP address is the BIG-IQ IP address defined in the docker0 network interface.
+Here is an example of a playbook to run. Note the server IP address is the BIG-IQ IP address defined in the docker0 network interface when running the playbook locally on the same BIG-IQ, otherwise you can use the management IP of a remote device.
 
 ``vi /shared/scripts/ansible/playbook.yml``
 
@@ -40,7 +40,7 @@ Here is an example of a playbook to run. Note the server IP address is the BIG-I
   vars:
     provider:
       user: admin
-      server: 10.100.0.1 # use BIG-IQ IP address defined in ifconfig docker0
+      server: 10.100.0.1 # BIG-IQ
       server_port: 443
       password: secret
       auth_provider: tmos
