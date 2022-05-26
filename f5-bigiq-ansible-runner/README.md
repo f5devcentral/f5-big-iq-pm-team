@@ -67,5 +67,6 @@ Execute the ansible playbook as below. Note we are mounting the ``/shared/script
 cd /shared/scripts/ansible
 docker run -it -v $(pwd):/ansible f5-ansible-runner 
 cd /ansible
+script playbook.logs
 ansible-playbook -i nohost, playbook.yml
 ```
